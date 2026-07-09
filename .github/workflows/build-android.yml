@@ -47,31 +47,21 @@ jobs:
       - name: Generate App Icon using Node.js
         run: |
           mkdir -p res
-          # Membuat file PNG sederhana menggunakan Node.js tanpa library eksternal
-          node -e "
-            const fs = require('fs');
-            // Header PNG + IHDR chunk + IDAT chunk sederhana untuk ikon biru 1x1 pixel (di-scale oleh Android)
-            // Untuk hasil terbaik, kita buat SVG lalu convert, tapi karena tidak ada tool, 
-            // kita gunakan script kecil untuk membuat file biner PNG yang valid.
-            // Namun, cara termudah di CI tanpa tool adalah menggunakan base64 dari ikon default Cordova.
-            
-            // Base64 dari ikon Cordova default (biru)
-            const iconBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAARnAAAEZwHCAKQrAAAAJElEQVR4nO3BMQEAAADCoPVPbQwfoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIC3Ac+QAQF9VjYhAAAAAElFTkSuQmCC';
-            const buf = Buffer.from(iconBase64, 'base64');
-            fs.writeFileSync('res/icon.png', buf);
-            console.log('Icon generated successfully at res/icon.png');
-          "
+          # Base64 dari ikon biru standar Cordova
+          const iconBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAARnAAAEZwHCAKQrAAAAJElEQVR4nO3BMQEAAADCoPVPbQwfoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIC3Ac+QAQF9VjYhAAAAAElFTkSuQmCC';
+          const fs = require('fs');
+          const buf = Buffer.from(iconBase64, 'base64');
+          fs.writeFileSync('res/icon.png', buf);
+          console.log('Icon generated successfully at res/icon.png');
 
       - name: Create Cordova project & configure
         run: |
           cordova create espapp com.esp32.c3.pro "ESP32-C3 Controller Pro"
           cd espapp
           
-          # Salin file konfigurasi dari root repo
+          # Salin file konfigurasi dan aset
           cp ../config.xml config.xml
           cp ../index.html www/index.html
-          
-          # Salin folder res yang berisi ikon
           cp -r ../res res
 
           # Tambahkan platform Android
@@ -88,6 +78,22 @@ jobs:
           cordova plugin add cordova-plugin-vibration
           cordova plugin add cordova-plugin-android-permissions
           cordova plugin add cordova-plugin-splashscreen
+
+      - name: Ensure Launcher Intent Filter
+        run: |
+          cd espapp
+          # Memastikan MainActivity memiliki intent-filter LAUNCHER
+          # Kadang plugin background-mode bisa menimpa ini jika tidak dikonfigurasi dengan benar
+          MANIFEST="platforms/android/app/src/main/AndroidManifest.xml"
+          if ! grep -q "android.intent.category.LAUNCHER" "$MANIFEST"; then
+            echo "WARNING: Launcher category missing! Attempting to fix..."
+            # Menambahkan intent-filter secara manual jika hilang
+            sed -i '/<activity android:name="MainActivity"/a \
+              <intent-filter>\
+                <action android:name="android.intent.action.MAIN" />\
+                <category android:name="android.intent.category.LAUNCHER" />\
+              </intent-filter>' "$MANIFEST"
+          fi
 
       - name: Build Android Debug APK
         run: |
