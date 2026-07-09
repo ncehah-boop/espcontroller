@@ -1,0 +1,68 @@
+name: Build Android Debug APK
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:   # memungkinkan trigger manual
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Cordova & Java
+        run: |
+          npm install -g cordova
+          sudo apt-get update
+          sudo apt-get install -y default-jdk android-sdk
+
+      - name: Set up Android SDK environment
+        run: |
+          export ANDROID_HOME=/usr/lib/android-sdk
+          export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
+          echo "ANDROID_HOME=/usr/lib/android-sdk" >> $GITHUB_ENV
+          echo "PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools" >> $GITHUB_ENV
+
+      - name: Accept Android SDK licenses
+        run: |
+          yes | sdkmanager --licenses || true
+
+      - name: Create Cordova project
+        run: |
+          cordova create espapp com.example.espcontroller "ESP Controller"
+          cd espapp
+          # Salin file index.html ke www/
+          cp ../index.html www/index.html
+          # (Opsional) tambahkan asset lain jika ada
+          # cp -r ../assets www/
+          # Tambahkan platform android
+          cordova platform add android@latest
+          # Tambahkan plugin yang diperlukan
+          cordova plugin add cordova-plugin-whitelist
+          cordova plugin add cordova-plugin-background-mode
+          cordova plugin add cordova-plugin-local-notification
+          cordova plugin add cordova-plugin-permissions
+          cordova plugin add cordova-plugin-vibration
+          cordova plugin add cordova-plugin-device  # opsional
+          # (Tambahkan plugin lain jika dibutuhkan)
+
+      - name: Build Android Debug APK
+        run: |
+          cd espapp
+          cordova build android --debug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: esp-controller-debug
+          path: espapp/platforms/android/app/build/outputs/apk/debug/app-debug.apk
