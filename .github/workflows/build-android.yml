@@ -29,17 +29,25 @@ jobs:
       - name: Install Cordova
         run: npm install -g cordova
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          # Menggunakan API 33 dan Build-tools 33.0.2 yang lebih stabil di CI
-          packages: |
-            platforms;android-33
-            build-tools;33.0.2
-            platform-tools
+      - name: Setup Android SDK Environment
+        run: |
+          # GitHub Actions runner sudah memiliki Android SDK terinstal
+          # Kita hanya perlu mengatur environment variable-nya
+          export ANDROID_HOME=/usr/local/lib/android/sdk
+          export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+          
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          echo "PATH=$PATH" >> $GITHUB_ENV
+
+      - name: Install Required Android Packages
+        run: |
+          # Install platform dan build-tools secara manual menggunakan sdkmanager
+          # Menggunakan API 33 dan Build-tools 33.0.2 yang stabil
+          yes | sdkmanager "platforms;android-33" "build-tools;33.0.2" "platform-tools"
 
       - name: Accept Android Licenses
-        run: yes | sdkmanager --licenses || true
+        run: |
+          yes | sdkmanager --licenses || true
 
       - name: Create Cordova project & configure
         run: |
