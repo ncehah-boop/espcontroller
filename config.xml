@@ -38,6 +38,7 @@
 
     <!-- General Preferences -->
     <preference name="DisallowOverscroll" value="true" />
-    <preference name="BackgroundColor" value="0xff0b0e17" />
+    <!-- PERBAIKAN FORMAT WARNA DI SINI -->
+    <preference name="BackgroundColor" value="#FF0B0E17" />
     <preference name="Orientation" value="portrait" />
 </widget>
