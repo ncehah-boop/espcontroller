@@ -31,19 +31,14 @@ jobs:
 
       - name: Setup Android SDK Environment
         run: |
-          # GitHub Actions runner sudah memiliki Android SDK terinstal
-          # Kita hanya perlu mengatur environment variable-nya
           export ANDROID_HOME=/usr/local/lib/android/sdk
           export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
-          
           echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
           echo "PATH=$PATH" >> $GITHUB_ENV
 
       - name: Install Required Android Packages
         run: |
-          # Install platform dan build-tools secara manual menggunakan sdkmanager
-          # Menggunakan API 33 dan Build-tools 33.0.2 yang stabil
-          yes | sdkmanager "platforms;android-33" "build-tools;33.0.2" "platform-tools"
+          yes | sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
 
       - name: Accept Android Licenses
         run: |
@@ -61,8 +56,8 @@ jobs:
           # Tambahkan platform Android
           cordova platform add android@latest
           
+          # PERBAIKAN: HAPUS cordova-plugin-whitelist karena sudah built-in di cordova-android 10+
           # Tambahkan plugin inti dan kompatibilitas
-          cordova plugin add cordova-plugin-whitelist
           cordova plugin add cordova-plugin-device
           cordova plugin add cordova-plugin-androidx
           cordova plugin add cordova-plugin-androidx-adapter
