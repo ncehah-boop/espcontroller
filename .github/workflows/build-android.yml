@@ -5,7 +5,7 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-  workflow_dispatch:   # memungkinkan trigger manual
+  workflow_dispatch:
 
 jobs:
   build:
@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install Cordova & Java
+      - name: Install Cordova & dependencies
         run: |
           npm install -g cordova
           sudo apt-get update
@@ -37,29 +37,30 @@ jobs:
         run: |
           yes | sdkmanager --licenses || true
 
-      - name: Create Cordova project
+      - name: Create Cordova project & add plugins
         run: |
           cordova create espapp com.example.espcontroller "ESP Controller"
           cd espapp
-          # Salin file index.html ke www/
+          # Salin file HTML utama
           cp ../index.html www/index.html
-          # (Opsional) tambahkan asset lain jika ada
-          # cp -r ../assets www/
           # Tambahkan platform android
           cordova platform add android@latest
-          # Tambahkan plugin yang diperlukan
+
+          # Plugin yang diperlukan (gunakan nama yang benar)
           cordova plugin add cordova-plugin-whitelist
           cordova plugin add cordova-plugin-background-mode
           cordova plugin add cordova-plugin-local-notification
-          cordova plugin add cordova-plugin-permissions
+          cordova plugin add cordova-plugin-android-permissions   # <-- yang benar
           cordova plugin add cordova-plugin-vibration
-          cordova plugin add cordova-plugin-device  # opsional
-          # (Tambahkan plugin lain jika dibutuhkan)
+          cordova plugin add cordova-plugin-device
+          # Plugin untuk kompatibilitas AndroidX
+          cordova plugin add cordova-plugin-androidx
+          cordova plugin add cordova-plugin-androidx-adapter
 
       - name: Build Android Debug APK
         run: |
           cd espapp
-          cordova build android --debug
+          cordova build android --debug --verbose
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
