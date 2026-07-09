@@ -11,14 +11,19 @@
     <content src="index.html" />
     <access origin="*" />
 
-    <!-- DEFINISI ADAPTIVE ICON -->
     <platform name="android">
-        <icon density="ldpi" src="res/android/foreground.png" background="res/android/background.png" />
-        <icon density="mdpi" src="res/android/foreground.png" background="res/android/background.png" />
-        <icon density="hdpi" src="res/android/foreground.png" background="res/android/background.png" />
-        <icon density="xhdpi" src="res/android/foreground.png" background="res/android/background.png" />
-        <icon density="xxhdpi" src="res/android/foreground.png" background="res/android/background.png" />
-        <icon density="xxxhdpi" src="res/android/foreground.png" background="res/android/background.png" />
+        <!-- PREFERENSI WAJIB UNTUK ANDROID 12+ -->
+        <preference name="AndroidWindowSplashScreenAnimatedIcon" value="res/android/foreground.png" />
+        <preference name="AndroidWindowSplashScreenBackground" value="#FF0B0E17" />
+        <preference name="AndroidWindowSplashScreenBrandingImage" value="" />
+        
+        <!-- DEFINISI IKON ADAPTIF LENGKAP PER DENSITAS -->
+        <icon density="ldpi" background="res/android/background.png" src="res/android/foreground.png" />
+        <icon density="mdpi" background="res/android/background.png" src="res/android/foreground.png" />
+        <icon density="hdpi" background="res/android/background.png" src="res/android/foreground.png" />
+        <icon density="xhdpi" background="res/android/background.png" src="res/android/foreground.png" />
+        <icon density="xxhdpi" background="res/android/background.png" src="res/android/foreground.png" />
+        <icon density="xxxhdpi" background="res/android/background.png" src="res/android/foreground.png" />
 
         <preference name="AndroidXEnabled" value="true" />
         
