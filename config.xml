@@ -1,5 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="com.esp32.c3.pro" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<widget id="com.esp32.c3.pro" version="1.0.0" 
+    xmlns="http://www.w3.org/ns/widgets" 
+    xmlns:cdv="http://cordova.apache.org/ns/1.0"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    
     <name>ESP32-C3 Controller Pro</name>
     <description>Advanced controller for ESP32-C3 with voice control, background mode, and alarm system.</description>
     <author email="dev@example.com">ESP32 Developer</author>
