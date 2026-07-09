@@ -1,0 +1,2665 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; media-src *; connect-src * ws: wss:;" />
+    <title>ESP32-C3 Controller Pro</title>
+    <style>
+        /* ============================================================
+           THEME VARIABLES (Sleek Dark / Light System)
+           ============================================================ */
+        :root {
+            --bg-primary: #0b0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1a2236;
+            --bg-card-hover: #1f2b42;
+            --bg-input: #0f1729;
+            --border-color: #2a3a5a;
+            --border-light: #3a4a6a;
+            --text-primary: #f0f4ff;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-cyan: #38bdf8;
+            --accent-blue: #818cf8;
+            --accent-green: #34d399;
+            --accent-orange: #fb923c;
+            --accent-red: #f87171;
+            --accent-pink: #f472b6;
+            --gradient-primary: linear-gradient(135deg, #38bdf8, #818cf8);
+            --gradient-success: linear-gradient(135deg, #34d399, #22d3ee);
+            --gradient-danger: linear-gradient(135deg, #f87171, #f472b6);
+            --gradient-warning: linear-gradient(135deg, #fb923c, #fbbf24);
+            --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.45);
+            --shadow-glow: 0 0 40px rgba(56, 189, 248, 0.08);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --radius-full: 9999px;
+            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f0f4ff;
+            --bg-secondary: #e8ecf6;
+            --bg-card: #ffffff;
+            --bg-card-hover: #f5f7fc;
+            --bg-input: #eef1f8;
+            --border-color: #d0d8e8;
+            --border-light: #c0c8d8;
+            --text-primary: #0b0e17;
+            --text-secondary: #3a4a6a;
+            --text-muted: #64748b;
+            --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.08);
+        }
+
+        /* ===== RESET & BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            font-size: 16px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 10px;
+        }
+
+        .app-container {
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 16px 14px 40px;
+            position: relative;
+        }
+
+        /* ============================================================
+           HEADER
+           ============================================================ */
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 0 14px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .app-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .app-brand .brand-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-sm);
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 4px 16px rgba(56, 189, 248, 0.25);
+        }
+
+        .app-brand .brand-icon svg {
+            width: 22px;
+            height: 22px;
+            fill: #fff;
+        }
+
+        .app-brand .brand-text h1 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+
+        .app-brand .brand-text .brand-sub {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            letter-spacing: 0.3px;
+            -webkit-text-fill-color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        .app-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .btn-icon {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 6px 10px;
+            border-radius: var(--radius-full);
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-icon:hover {
+            background: var(--bg-card);
+            border-color: var(--border-light);
+            color: var(--text-primary);
+        }
+
+        .btn-icon svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+        }
+
+        /* ============================================================
+           CONNECT & SETTINGS CONFIG OVERLAY
+           ============================================================ */
+        .connect-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(11, 14, 23, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+            animation: fadeIn 0.4s ease;
+            overflow-y: auto;
+        }
+
+        .connect-overlay.hidden {
+            display: none !important;
+        }
+
+        [data-theme="light"] .connect-overlay {
+            background: rgba(240, 244, 255, 0.92);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.96);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .connect-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 28px 24px;
+            max-width: 480px;
+            width: 100%;
+            text-align: center;
+            box-shadow: var(--shadow-card);
+            transition: background 0.3s;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .connect-card .connect-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 32px rgba(56, 189, 248, 0.2);
+        }
+
+        .connect-card .connect-icon svg {
+            width: 28px;
+            height: 28px;
+            fill: #fff;
+        }
+
+        .connect-card h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+        }
+
+        .connect-card .connect-desc {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-bottom: 16px;
+        }
+
+        .connect-card .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .connect-card .input-group .ip-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .connect-card .input-group .ip-row input {
+            flex: 1;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            text-align: center;
+            transition: var(--transition);
+            outline: none;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+
+        .connect-card .input-group .ip-row input:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+        }
+
+        .connect-card .input-group .ip-row .btn-connect {
+            padding: 10px 18px;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: var(--gradient-primary);
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 20px rgba(56, 189, 248, 0.2);
+            white-space: nowrap;
+        }
+
+        .connect-card .input-group .ip-row .btn-connect:hover {
+            transform: translateY(-1px);
+        }
+
+        .connect-card .preset-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 4px;
+            margin-bottom: 14px;
+        }
+
+        .connect-card .preset-row .preset-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            font-size: 0.65rem;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .connect-card .preset-row .preset-btn:hover {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+        }
+
+        .connect-card .preset-row .preset-btn.active {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        /* Settings Form Inside Modal */
+        .settings-form {
+            text-align: left;
+            margin: 16px 0;
+            padding-top: 14px;
+            border-top: 1px solid var(--border-color);
+        }
+        .settings-section-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+        .settings-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+        .settings-row label {
+            flex: 1;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+        .settings-row input {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 0.8rem;
+            outline: none;
+        }
+        .settings-row input.pin-label-input {
+            width: 140px;
+        }
+        .settings-row input.pin-gpio-input {
+            width: 60px;
+            text-align: center;
+        }
+
+        /* Backup Area */
+        .backup-wrap {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+            text-align: left;
+        }
+        .backup-wrap textarea {
+            width: 100%;
+            height: 52px;
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.7rem;
+            padding: 6px;
+            outline: none;
+            resize: none;
+            margin-bottom: 8px;
+        }
+
+        .connect-card .connect-hint {
+            margin-top: 14px;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            border-top: 1px solid var(--border-color);
+            padding-top: 10px;
+        }
+
+        .connect-card .auto-discover {
+            margin-top: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .connect-card .auto-discover .btn-scan {
+            background: transparent;
+            border: 1px dashed var(--border-color);
+            color: var(--text-muted);
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+            font-size: 0.65rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .connect-card .auto-discover .btn-scan:hover {
+            border-color: var(--border-light);
+            color: var(--text-secondary);
+        }
+
+        .connect-card .auto-discover .scan-result {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+
+        /* ============================================================
+           STATUS BAR
+           ============================================================ */
+        .status-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 10px 16px;
+            margin-bottom: 16px;
+            transition: background 0.3s;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .status-item .label {
+            color: var(--text-muted);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+
+        .status-dot.online {
+            background: var(--accent-green);
+            box-shadow: 0 0 12px rgba(52, 211, 153, 0.4);
+        }
+
+        .status-dot.offline {
+            background: var(--accent-red);
+            box-shadow: 0 0 12px rgba(248, 113, 113, 0.3);
+        }
+
+        .status-dot.connecting {
+            background: var(--accent-orange);
+            animation: pulse-connect 1s infinite;
+        }
+
+        @keyframes pulse-connect {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .status-ip {
+            font-family: monospace;
+            color: var(--accent-cyan);
+            font-size: 0.75rem;
+            background: var(--bg-input);
+            padding: 1px 10px;
+            border-radius: var(--radius-full);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .status-ip:hover {
+            border-color: var(--accent-cyan);
+        }
+
+        .status-divider {
+            width: 1px;
+            height: 18px;
+            background: var(--border-color);
+        }
+
+        .status-badge {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            padding: 1px 8px;
+            border-radius: var(--radius-full);
+            color: var(--text-secondary);
+            font-size: 0.65rem;
+            font-weight: 600;
+        }
+
+        /* ============================================================
+           VOICE BAR
+           ============================================================ */
+        .voice-bar {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            transition: background 0.3s;
+        }
+
+        .voice-bar .voice-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .voice-bar .voice-info .voice-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .voice-bar .voice-info .voice-icon.active {
+            border-color: var(--accent-orange);
+            background: rgba(251, 146, 60, 0.12);
+            animation: pulse-ring 1.8s infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(251, 146, 60, 0.3); }
+            70% { box-shadow: 0 0 0 8px rgba(251, 146, 60, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(251, 146, 60, 0); }
+        }
+
+        .voice-bar .voice-info .voice-icon svg {
+            width: 16px;
+            height: 16px;
+            fill: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .voice-bar .voice-info .voice-icon.active svg {
+            fill: var(--accent-orange);
+        }
+
+        .voice-bar .voice-info .voice-label {
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .voice-bar .voice-info .voice-status-text {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .btn-voice {
+            background: var(--gradient-warning);
+            border: none;
+            color: #fff;
+            padding: 7px 18px;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 16px rgba(251, 146, 60, 0.2);
+        }
+
+        .btn-voice:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-voice.listening {
+            background: var(--gradient-danger);
+            animation: pulse-voice 1.2s infinite;
+        }
+
+        @keyframes pulse-voice {
+            0% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.4); }
+            70% { box-shadow: 0 0 0 12px rgba(248, 113, 113, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0); }
+        }
+
+        .btn-voice svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+        }
+
+        /* ============================================================
+           SECTION TITLE
+           ============================================================ */
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin: 20px 0 10px;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        .section-title .title-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+        }
+
+        .section-title .title-icon svg {
+            width: 12px;
+            height: 12px;
+            fill: var(--text-secondary);
+        }
+
+        .section-title .title-line {
+            flex: 1;
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        /* ============================================================
+           PIN GRID
+           ============================================================ */
+        .pin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .pin-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 16px 12px 14px;
+            text-align: center;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            min-height: 160px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .pin-card:hover {
+            border-color: var(--border-light);
+            background: var(--bg-card-hover);
+        }
+
+        .pin-card.on {
+            border-color: rgba(56, 189, 248, 0.4);
+            background: rgba(56, 189, 248, 0.04);
+        }
+
+        .pin-card.on::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, rgba(56, 189, 248, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+            border-radius: var(--radius-sm);
+        }
+
+        .pin-card .pin-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            margin: 0 auto 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+            position: relative;
+            z-index: 1;
+        }
+
+        .pin-card.on .pin-icon {
+            background: var(--gradient-primary);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 4px 16px rgba(56, 189, 248, 0.25);
+            transform: scale(1.05);
+        }
+
+        .pin-card .pin-icon svg {
+            width: 16px;
+            height: 16px;
+            fill: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .pin-card.on .pin-icon svg {
+            fill: #fff;
+        }
+
+        .pin-card .pin-name {
+            font-weight: 600;
+            font-size: 0.85rem;
+            position: relative;
+            z-index: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .pin-card .pin-gpio {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            width: 44px;
+            height: 26px;
+            border-radius: 13px;
+            border: none;
+            background: var(--bg-input);
+            position: relative;
+            cursor: pointer;
+            transition: var(--transition);
+            outline: none;
+            z-index: 1;
+            border: 1px solid var(--border-color);
+            margin: 4px auto;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+            top: 2px;
+            left: 2px;
+            transition: var(--transition);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-switch.on {
+            background: var(--gradient-primary);
+            border-color: var(--accent-cyan);
+        }
+
+        .toggle-switch.on::after {
+            transform: translateX(18px);
+            background: #fff;
+        }
+
+        /* Timer Select & Label */
+        .pin-timer {
+            margin-top: 4px;
+            font-size: 0.6rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-full);
+            color: var(--text-secondary);
+            padding: 1px 6px;
+            outline: none;
+            cursor: pointer;
+            width: 100%;
+            text-align: center;
+            transition: var(--transition);
+            z-index: 1;
+            position: relative;
+            height: 22px;
+        }
+
+        .pin-timer:focus {
+            border-color: var(--accent-cyan);
+        }
+
+        .pin-timer option {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .countdown-indicator {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: var(--accent-orange);
+            font-family: monospace;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 1px 4px;
+            border-radius: 4px;
+            z-index: 2;
+        }
+
+        /* Momentary Button */
+        .momentary-btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: var(--transition);
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            justify-content: center;
+            width: 100%;
+            z-index: 1;
+            position: relative;
+            min-height: 36px;
+            margin-top: 6px;
+        }
+
+        .momentary-btn svg {
+            width: 12px;
+            height: 12px;
+            fill: currentColor;
+        }
+
+        .momentary-btn:active,
+        .momentary-btn.active {
+            background: var(--gradient-warning);
+            border-color: var(--accent-orange);
+            color: #fff;
+            transform: scale(0.94);
+            box-shadow: 0 4px 20px rgba(251, 146, 60, 0.3);
+        }
+
+        /* ============================================================
+           ACTION ROWS & PRESETS
+           ============================================================ */
+        .action-row {
+            display: flex;
+            gap: 8px;
+            margin: 6px 0 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 6px 14px;
+            border-radius: var(--radius-full);
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-action:hover {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+        }
+
+        .btn-action svg {
+            width: 12px;
+            height: 12px;
+            fill: currentColor;
+        }
+
+        .btn-action.on {
+            background: var(--gradient-success);
+            border-color: var(--accent-green);
+            color: #fff;
+        }
+
+        .btn-action.off {
+            background: var(--gradient-danger);
+            border-color: var(--accent-red);
+            color: #fff;
+        }
+
+        /* ============================================================
+           SENSORS & PROGRESS BARS
+           ============================================================ */
+        .sensor-data {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            margin-bottom: 14px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 14px 24px;
+            transition: background 0.3s;
+        }
+
+        .sensor-data .sensor-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+        }
+
+        .sensor-data .sensor-item .sensor-label {
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .sensor-data .sensor-item .sensor-value {
+            font-weight: 600;
+            font-size: 1rem;
+            font-family: monospace;
+            color: var(--accent-cyan);
+        }
+
+        .sensor-data .sensor-item .sensor-unit {
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            margin-left: 1px;
+        }
+
+        .sensor-data .sensor-time {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-left: auto;
+        }
+
+        .sensor-bar-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 80px;
+        }
+
+        .sensor-bar-wrap .sensor-bar-track {
+            flex: 1;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border-color);
+            overflow: hidden;
+            min-width: 40px;
+        }
+
+        .sensor-bar-wrap .sensor-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: var(--gradient-primary);
+            transition: width 0.6s ease;
+            width: 0%;
+        }
+
+        .sensor-bar-wrap .sensor-bar-fill.temp {
+            background: linear-gradient(135deg, #f87171, #fb923c);
+        }
+        .sensor-bar-wrap .sensor-bar-fill.hum {
+            background: linear-gradient(135deg, #38bdf8, #34d399);
+        }
+
+        /* ============================================================
+           INDICATOR STATUS LED
+           ============================================================ */
+        .indicator-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 10px 16px;
+            margin-bottom: 14px;
+            transition: background 0.3s;
+        }
+
+        .indicator-led {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            border: 2px solid var(--border-color);
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+
+        .indicator-led.on {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            box-shadow: 0 0 20px rgba(52, 211, 153, 0.3);
+        }
+
+        .indicator-row .indicator-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .indicator-row .indicator-status {
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: auto;
+            color: var(--text-muted);
+        }
+
+        .indicator-row .indicator-status.on {
+            color: var(--accent-green);
+        }
+
+        /* ============================================================
+           PWM DIMMER SLIDER (EXTRA COMPONENT)
+           ============================================================ */
+        .pwm-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            margin-bottom: 14px;
+        }
+        .pwm-slider {
+            width: 100%;
+            margin-top: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border-color);
+            outline: none;
+            transition: var(--transition);
+            z-index: 1;
+            position: relative;
+        }
+        .pwm-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(56, 189, 248, 0.3);
+        }
+        .pwm-slider::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            cursor: pointer;
+            border: none;
+        }
+
+        /* ============================================================
+           ALARM CARD
+           ============================================================ */
+        .alarm-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 16px 16px 14px;
+            margin-bottom: 14px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .alarm-card.active {
+            border-color: rgba(248, 113, 113, 0.4);
+            background: rgba(248, 113, 113, 0.04);
+            animation: alarm-glow 1.2s infinite alternate;
+        }
+
+        @keyframes alarm-glow {
+            0% { box-shadow: 0 0 20px rgba(248, 113, 113, 0.05); }
+            100% { box-shadow: 0 0 40px rgba(248, 113, 113, 0.15); }
+        }
+
+        .alarm-card .alarm-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .alarm-card .alarm-icon-wrap {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            flex-shrink: 0;
+            transition: var(--transition);
+        }
+
+        .alarm-card.active .alarm-icon-wrap {
+            background: rgba(248, 113, 113, 0.12);
+            border-color: rgba(248, 113, 113, 0.3);
+            animation: pulse-ring 1.8s infinite;
+        }
+
+        .alarm-card .alarm-icon-wrap svg {
+            width: 22px;
+            height: 22px;
+            fill: var(--text-muted);
+            transition: var(--transition);
+        }
+
+        .alarm-card.active .alarm-icon-wrap svg {
+            fill: var(--accent-red);
+        }
+
+        .alarm-card .alarm-info {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .alarm-card .alarm-info .alarm-title {
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .alarm-card .alarm-info .alarm-status-text {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .alarm-card .alarm-info .alarm-status-text.on {
+            color: var(--accent-red);
+            font-weight: 600;
+        }
+
+        .alarm-card .alarm-info .alarm-status-text.off {
+            color: var(--accent-green);
+        }
+
+        .alarm-card .alarm-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+
+        .btn-danger {
+            background: var(--gradient-danger);
+            border: none;
+            color: #fff;
+            padding: 6px 16px;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 4px 16px rgba(248, 113, 113, 0.2);
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            transform: translateY(-1px);
+        }
+
+        .btn-danger:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-danger svg {
+            width: 12px;
+            height: 12px;
+            fill: currentColor;
+        }
+
+        .sensor-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: var(--radius-full);
+            font-size: 0.65rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .sensor-badge .sensor-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            transition: var(--transition);
+        }
+
+        .sensor-badge .sensor-dot.triggered {
+            background: var(--accent-red);
+            box-shadow: 0 0 12px rgba(248, 113, 113, 0.4);
+        }
+
+        /* ============================================================
+           LOG TERMINAL
+           ============================================================ */
+        .log-container {
+            margin-top: 20px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            transition: background 0.3s;
+        }
+
+        .log-container .log-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 14px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .log-container .log-header .log-title {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .log-box {
+            padding: 8px 14px;
+            max-height: 140px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .log-box .log-entry {
+            display: flex;
+            gap: 6px;
+            padding: 1px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+        }
+
+        .log-box .log-entry .log-time {
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .log-box .log-entry .log-msg {
+            word-break: break-word;
+        }
+
+        .log-box .log-entry .log-msg.on { color: var(--accent-green); }
+        .log-box .log-entry .log-msg.off { color: var(--accent-red); }
+        .log-box .log-entry .log-msg.warn { color: var(--accent-orange); }
+        .log-box .log-entry .log-msg.info { color: var(--accent-cyan); }
+
+        /* Sync Controls */
+        .sync-row {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 2px;
+            flex-wrap: wrap;
+        }
+
+        .btn-sync {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 5px 14px;
+            border-radius: var(--radius-full);
+            font-size: 0.65rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-sync:hover {
+            border-color: var(--border-light);
+            color: var(--text-secondary);
+            background: var(--bg-card);
+        }
+
+        .btn-sync svg {
+            width: 12px;
+            height: 12px;
+            fill: currentColor;
+        }
+
+        /* ============================================================
+           RESPONSIVE VIEWPORT
+           ============================================================ */
+        @media (max-width: 600px) {
+            .app-container { padding: 10px 10px 28px; }
+            .app-header { flex-direction: column; align-items: stretch; gap: 8px; }
+            .app-brand .brand-text h1 { font-size: 1rem; }
+            .app-actions { justify-content: flex-start; }
+            .connect-card { padding: 24px 16px; }
+            .pin-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .pin-card { padding: 12px 8px 10px; }
+            .voice-bar { flex-direction: column; align-items: stretch; }
+            .voice-bar .voice-info { justify-content: center; }
+            .btn-voice { justify-content: center; width: 100%; }
+            .alarm-card .alarm-header { flex-direction: column; align-items: stretch; }
+            .alarm-card .alarm-actions { justify-content: flex-start; }
+            .status-bar { padding: 8px 12px; gap: 4px 10px; }
+            .status-divider { display: none; }
+            .sensor-data { gap: 10px 16px; }
+            .sensor-data .sensor-time { margin-left: 0; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================
+    CONNECT & CONFIGURATION OVERLAY
+    ============================================================ -->
+    <div id="connectOverlay" class="connect-overlay">
+        <div class="connect-card">
+            <div class="connect-icon">
+                <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            </div>
+            <h2>Konfigurasi ESP32</h2>
+            <p class="connect-desc">Masukkan IP & Konfigurasi perangkat keras Anda</p>
+            
+            <div class="input-group">
+                <div class="ip-row">
+                    <input type="text" id="ipInput" placeholder="192.168.4.1" value="192.168.4.1" autofocus />
+                    <button class="btn-connect" onclick="saveAndConnect()">Sambung</button>
+                </div>
+            </div>
+
+            <!-- Preset IPs -->
+            <div class="preset-row" id="presetRow">
+                <span style="font-size:0.65rem;color:var(--text-muted);padding:3px 0;">Preset:</span>
+                <button class="preset-btn active" onclick="usePreset(event, '192.168.4.1')">AP</button>
+                <button class="preset-btn" onclick="usePreset(event, '192.168.100.101')">STA</button>
+                <button class="preset-btn" onclick="usePreset(event, '192.168.1.100')">LAN</button>
+            </div>
+
+            <!-- Auto-discover -->
+            <div class="auto-discover">
+                <button class="btn-scan" onclick="autoDiscover()">🔍 Cari ESP32 di Jaringan</button>
+                <div class="scan-result" id="scanResult"></div>
+            </div>
+
+            <!-- Dynamic Pin Label and GPIO Configuration Form -->
+            <div class="settings-form">
+                <div class="settings-section-title">Pemetaan Nama Pin & GPIO</div>
+                <div id="settingsFormList">
+                    <!-- Dynamic Rows Rendered by JS -->
+                </div>
+            </div>
+
+            <!-- Voice Assistant Setting -->
+            <div class="settings-row" style="margin-top: 10px; border-top: 1px solid var(--border-color); padding-top: 12px; display: flex; justify-content: space-between;">
+                <label style="font-size:0.75rem; font-weight:600; color:var(--text-secondary);">Asisten Suara Peringatan (TTS):</label>
+                <input type="checkbox" id="ttsToggle" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent-cyan);" checked />
+            </div>
+
+            <!-- Backup and Restore Block -->
+            <div class="backup-wrap">
+                <div class="settings-section-title">Pencadangan / Pemulihan (JSON)</div>
+                <textarea id="backupArea" placeholder="Salin kode ekspor ke sini untuk memulihkan konfigurasi..."></textarea>
+                <div style="display: flex; gap: 6px;">
+                    <button class="preset-btn" style="flex:1; padding:6px;" onclick="exportConfigJSON()">Ekspor JSON</button>
+                    <button class="preset-btn" style="flex:1; padding:6px;" onclick="importConfigJSON()">Impor JSON</button>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: 14px;">
+                <button class="btn-connect" style="flex: 1; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary);" onclick="closeOverlay()">Tutup</button>
+                <button class="btn-connect" style="flex: 1;" onclick="applyConfiguration()">Simpan & Terapkan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+    MAIN APPLICATION
+    ============================================================ -->
+    <div id="mainApp" class="app-container" style="display:none;">
+
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="app-brand">
+                <div class="brand-icon">
+                    <svg viewBox="0 0 24 24"><path d="M16.5 9.5V6c0-2.49-2.01-4.5-4.5-4.5S7.5 3.51 7.5 6v3.5C5.57 9.5 4 11.07 4 13v5c0 1.93 1.57 3.5 3.5 3.5h9c1.93 0 3.5-1.57 3.5-3.5v-5c0-1.93-1.57-3.5-3.5-3.5zM9.5 6c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v3.5h-5V6zm8.5 12c0 .83-.67 1.5-1.5 1.5h-9c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5h9c.83 0 1.5.67 1.5 1.5v5z"/></svg>
+                </div>
+                <div class="brand-text">
+                    <h1>ESP32-C3 Pro</h1>
+                    <span class="brand-sub">Hybrid Controller Panel</span>
+                </div>
+            </div>
+            <div class="app-actions">
+                <button class="btn-icon" onclick="toggleTheme()" title="Ganti Tema" id="themeBtn">
+                    <svg viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9z"/></svg>
+                </button>
+                <button class="btn-icon" onclick="openOverlay()" title="Pengaturan">
+                    <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- STATUS / DIAGNOSTIC BAR -->
+        <div class="status-bar">
+            <div class="status-item">
+                <span class="status-dot" id="wsStatus"></span>
+                <span class="label">WS</span>
+            </div>
+            <span class="status-divider"></span>
+            <div class="status-item">
+                <span class="label">IP</span>
+                <span class="status-ip" id="ipDisplay" onclick="openOverlay()">-</span>
+            </div>
+            <span class="status-divider"></span>
+            <div class="status-item">
+                <span class="label">WiFi</span>
+                <span class="status-badge" id="wifiStatus">-</span>
+            </div>
+            <span class="status-divider"></span>
+            <div class="status-item">
+                <span class="status-badge" id="latencyDisplay" style="font-family: monospace;">- ms</span>
+            </div>
+        </div>
+
+        <!-- VOICE CONTROL BAR -->
+        <div class="voice-bar" id="voiceBar">
+            <div class="voice-info">
+                <div class="voice-icon" id="voiceIcon">
+                    <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
+                </div>
+                <div>
+                    <div class="voice-label">🎤 Kontrol Suara</div>
+                    <div class="voice-status-text" id="voiceStatus">Ucapkan perintah atau nama sakelar...</div>
+                </div>
+            </div>
+            <button class="btn-voice" id="micBtn">
+                <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
+                Mulai
+            </button>
+        </div>
+
+        <!-- CONNECTIONS / STATUS LED INDICATOR -->
+        <div class="indicator-row">
+            <div class="indicator-led" id="indicatorLed"></div>
+            <span class="indicator-label">Indikator Koneksi Fisik</span>
+            <span class="indicator-status" id="indicatorStatus">● GPIO 2</span>
+        </div>
+
+        <!-- PRESET SCENE MODES -->
+        <div class="section-title">
+            <span class="title-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg></span>
+            Preset Scene Mode
+            <span class="title-line"></span>
+        </div>
+        <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+            <button class="btn-action on" style="flex: 1; justify-content: center; font-size: 0.8rem; padding: 10px;" onclick="triggerScene('home')">
+                🏠 Mode Rumah
+            </button>
+            <button class="btn-action off" style="flex: 1; justify-content: center; font-size: 0.8rem; padding: 10px;" onclick="triggerScene('away')">
+                🚶 Mode Pergi
+            </button>
+        </div>
+
+        <!-- SENSOR MONITOR DISPLAY -->
+        <div class="section-title">
+            <span class="title-icon"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/></svg></span>
+            Telemetri Sensor
+            <span class="title-line"></span>
+        </div>
+        <div class="sensor-data" id="sensorData">
+            <div class="sensor-item">
+                <span class="sensor-label">🌡️ Suhu</span>
+                <span class="sensor-value" id="sensorTemp">--</span>
+                <span class="sensor-unit">°C</span>
+            </div>
+            <div class="sensor-bar-wrap">
+                <div class="sensor-bar-track">
+                    <div class="sensor-bar-fill temp" id="tempBar" style="width:0%"></div>
+                </div>
+            </div>
+            <div class="sensor-item">
+                <span class="sensor-label">💧 Kelembaban</span>
+                <span class="sensor-value" id="sensorHum">--</span>
+                <span class="sensor-unit">%</span>
+            </div>
+            <div class="sensor-bar-wrap">
+                <div class="sensor-bar-track">
+                    <div class="sensor-bar-fill hum" id="humBar" style="width:0%"></div>
+                </div>
+            </div>
+            <div class="sensor-time" id="sensorTime">-</div>
+        </div>
+
+        <!-- TOGGLE SWITCHES -->
+        <div class="section-title">
+            <span class="title-icon"><svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg></span>
+            Toggle Switch
+            <span class="title-line"></span>
+        </div>
+
+        <div class="action-row">
+            <button class="btn-action on" onclick="allOn()">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                Semua ON
+            </button>
+            <button class="btn-action off" onclick="allOff()">
+                <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+                Semua OFF
+            </button>
+        </div>
+
+        <div class="pin-grid" id="pinGrid"></div>
+
+        <!-- MOMENTARY SWITCHES -->
+        <div class="section-title">
+            <span class="title-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg></span>
+            Momentary Switch
+            <span class="title-line"></span>
+        </div>
+        <div class="pin-grid" id="momentaryGrid"></div>
+
+        <!-- PWM DIMMER (GPIO 4) -->
+        <div class="section-title">
+            <span class="title-icon"><svg viewBox="0 0 24 24"><path d="M21 13H3v-2h18v2zM3 6h18v2H3V6zm0 8h18v2H3v-2z"/></svg></span>
+            PWM Dimmer (GPIO 4)
+            <span class="title-line"></span>
+        </div>
+        <div class="pwm-card">
+            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+                <span style="font-size:0.8rem;font-weight:500;">Kecerahan</span>
+                <input type="range" min="0" max="255" value="0" class="pwm-slider" id="pwmSlider" style="flex:1;min-width:100px;" oninput="updatePWM(this.value)" />
+                <span style="font-size:0.75rem;color:var(--text-muted);min-width:32px;" id="pwmValue">0</span>
+                <button class="btn-action on" onclick="setPWMValue(255)" style="padding:4px 12px;">Max</button>
+                <button class="btn-action off" onclick="setPWMValue(0)" style="padding:4px 12px;">Off</button>
+            </div>
+            <div style="font-size:0.65rem;color:var(--text-muted);margin-top:6px;">Kirim nilai siklus aktif PWM ke GPIO 4 (0-255)</div>
+        </div>
+
+        <!-- ALARM SYSTEM -->
+        <div class="section-title">
+            <span class="title-icon"><svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg></span>
+            Sistem Keamanan & Alarm
+            <span class="title-line"></span>
+        </div>
+
+        <div class="alarm-card" id="alarmCard">
+            <div class="alarm-header">
+                <div class="alarm-icon-wrap" id="alarmIconWrap">
+                    <svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+                </div>
+                <div class="alarm-info">
+                    <div class="alarm-title">Status Proteksi</div>
+                    <div class="alarm-status-text off" id="alarmStatusText">● Aman & Kondusif</div>
+                </div>
+                <div class="alarm-actions">
+                    <button class="btn-danger" id="btnMute" onclick="muteAlarm()" disabled>
+                        <svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63z"/></svg>
+                        Matikan Alarm
+                    </button>
+                    <span class="sensor-badge">
+                        <span class="sensor-dot" id="sensorDot"></span>
+                        <span id="sensorText">Sensor Siap</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- UTILITY CONTROL BUTTONS -->
+        <div class="sync-row">
+            <button class="btn-sync" onclick="forceSync()">
+                <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+                Sinkronkan Status
+            </button>
+            <button class="btn-sync" onclick="clearLogs()">
+                <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+                Hapus Log
+            </button>
+            <button class="btn-sync" onclick="exportLogToCSV()">
+                📥 Ekspor CSV
+            </button>
+        </div>
+
+        <!-- EVENT SYSTEM TERMINAL LOG -->
+        <div class="log-container">
+            <div class="log-header">
+                <span class="log-title">Konsol Log Aktivitas</span>
+                <span style="font-size:0.6rem;color:var(--text-muted);" id="logCount">0</span>
+            </div>
+            <div class="log-box" id="logBox">
+                <div class="log-entry"><span class="log-time">[Sistem]</span><span class="log-msg info">Panel kendali memuat komponen...</span></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="text/javascript" src="cordova.js"></script>
+    <script>
+        // ============================================================
+        //  ESP32-C3 CONTROLLER PRO — CORE CONTROLLER (Diperbaiki)
+        // ============================================================
+
+        var espIP = '';
+        try { espIP = localStorage.getItem('espIP') || ''; } catch (_) { espIP = ''; }
+
+        var ws = null;
+        var reconnectTimer = null;
+        var pingTimer = null;
+        var pingInterval = 4000;
+        var reconnectAttempts = 0;
+        var maxReconnectAttempts = 10;
+        
+        var pins = [];
+        var activityLog = [];
+        var logCount = 0;
+        
+        var alarmActive = false;
+        var sensorTriggered = false;
+        var audioCtx = null;
+        var cordovaReady = false;
+        var ttsEnabled = true;
+
+        // Default layout configurations
+        var DEFAULT_PINS = [
+            { id: 'SW1', label: 'Switch 1', gpio: 4, state: false, mode: 'toggle', timerLimit: 0 },
+            { id: 'SW2', label: 'Switch 2', gpio: 5, state: false, mode: 'toggle', timerLimit: 0 },
+            { id: 'SW3', label: 'Switch 3', gpio: 6, state: false, mode: 'toggle', timerLimit: 0 },
+            { id: 'MOM1', label: 'Momentary 1', gpio: 10, state: false, mode: 'momentary' }
+        ];
+
+        var toggleDebounce = {};
+        var autoOffTimers = {};
+        var momentaryActive = {}; // tambahan untuk debounce momentary
+
+        // Local sound loops
+        var alarmLoopTimer = null;
+        var alarmOsc = null;
+        var alarmGain = null;
+
+        var $ = function(id) { return document.getElementById(id); };
+
+        // ============================================================
+        //  THEME SYSTEM
+        // ============================================================
+        function toggleTheme() {
+            var html = document.documentElement;
+            var current = html.getAttribute('data-theme');
+            var next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            try { localStorage.setItem('theme', next); } catch (_) {}
+            updateThemeIcon(next);
+            log('Mengganti tema ke: ' + next.toUpperCase(), 'info');
+        }
+
+        function updateThemeIcon(theme) {
+            var btn = $('themeBtn');
+            if (!btn) return;
+            if (theme === 'dark') {
+                btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9z"/></svg>';
+            } else {
+                btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/><path d="M12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>';
+            }
+        }
+
+        function loadTheme() {
+            try {
+                var saved = localStorage.getItem('theme') || 'dark';
+                document.documentElement.setAttribute('data-theme', saved);
+                updateThemeIcon(saved);
+            } catch (_) {}
+        }
+
+        // ============================================================
+        //  CORDOVA LIFECYCLE
+        // ============================================================
+        document.addEventListener('deviceready', function() {
+            log('[Sistem] Cordova telah siap digunakan', 'info');
+            cordovaReady = true;
+            setupBackgroundMode();
+            if (window.cordova && cordova.platformId === 'android') {
+                requestAndroidPermissions();
+                setupBatteryOptimizations();
+            }
+            document.addEventListener('backbutton', function(e) {
+                e.preventDefault();
+                if (navigator.app) navigator.app.exitApp();
+            }, false);
+            loadTheme();
+            initApp();
+        }, false);
+
+        if (!window.cordova) {
+            document.addEventListener('DOMContentLoaded', function() {
+                loadTheme();
+                initApp();
+            });
+        }
+
+        function setupBackgroundMode() {
+            if (!window.cordova || !cordova.plugins || !cordova.plugins.backgroundMode) return;
+            var bg = cordova.plugins.backgroundMode;
+            bg.enable();
+            bg.setDefaults({
+                title: 'Monitoring ESP32 Pro',
+                text: 'Mengawasi koneksi dan alarm latar belakang...',
+                icon: 'icon',
+                color: '38bdf8',
+                resume: true,
+                hidden: false
+            });
+            bg.on('activate', function() {
+                bg.disableWebViewOptimizations();
+            });
+        }
+
+        function setupBatteryOptimizations() {
+            if (!window.cordova || !cordova.plugins || !cordova.plugins.backgroundMode) return;
+            var bg = cordova.plugins.backgroundMode;
+            bg.isIgnoringBatteryOptimizations(function(ignoring) {
+                if (!ignoring) bg.disableBatteryOptimizations();
+            });
+        }
+
+        function requestAndroidPermissions() {
+            var perms = cordova.plugins.permissions;
+            if (!perms) return;
+            var list = [
+                perms.RECORD_AUDIO, perms.VIBRATE, perms.WAKE_LOCK, perms.FOREGROUND_SERVICE
+            ];
+            list.forEach(function(p) {
+                perms.checkPermission(p, function(status) {
+                    if (!status.hasPermission) perms.requestPermission(p, null, null);
+                }, null);
+            });
+        }
+
+        // ============================================================
+        //  INITIALIZATION
+        // ============================================================
+        function initApp() {
+            // Load Dynamic Pins
+            try {
+                var savedPins = localStorage.getItem('pinsConfig');
+                pins = savedPins ? JSON.parse(savedPins) : JSON.parse(JSON.stringify(DEFAULT_PINS));
+            } catch (_) {
+                pins = JSON.parse(JSON.stringify(DEFAULT_PINS));
+            }
+
+            // Load TTS
+            try {
+                var ttsState = localStorage.getItem('ttsEnabled');
+                ttsEnabled = (ttsState !== 'false');
+            } catch (_) { ttsEnabled = true; }
+            var ttsCheck = $('ttsToggle');
+            if (ttsCheck) ttsCheck.checked = ttsEnabled;
+
+            if (!espIP) {
+                openOverlay();
+            } else {
+                $('connectOverlay').classList.add('hidden');
+                $('mainApp').style.display = 'block';
+                $('ipDisplay').textContent = espIP;
+                $('ipInput').value = espIP;
+                renderPins();
+                connectWebSocket();
+            }
+        }
+
+        function openOverlay() {
+            $('connectOverlay').classList.remove('hidden');
+            $('mainApp').style.display = 'none';
+            renderSettingsForm();
+        }
+
+        function closeOverlay() {
+            if (!espIP) { alert('Masukkan alamat IP terlebih dahulu!'); return; }
+            $('connectOverlay').classList.add('hidden');
+            $('mainApp').style.display = 'block';
+        }
+
+        function saveAndConnect() {
+            var input = $('ipInput').value.trim();
+            if (!input) { alert('Harap isi alamat IP!'); return; }
+            espIP = input;
+            try { localStorage.setItem('espIP', espIP); } catch (_) {}
+            $('ipDisplay').textContent = espIP;
+            closeOverlay();
+            renderPins();
+            connectWebSocket();
+        }
+
+        // ============================================================
+        //  PRESETS & DISCOVER (Perbaikan: event parameter)
+        // ============================================================
+        function usePreset(ev, ip) {
+            if (ev) ev.preventDefault();
+            $('ipInput').value = ip;
+            var btns = $('presetRow').querySelectorAll('.preset-btn');
+            btns.forEach(function(b) { b.classList.remove('active'); });
+            if (ev && ev.target) ev.target.classList.add('active');
+            else {
+                // fallback: cari tombol dengan teks yang cocok
+                btns.forEach(function(b) {
+                    if (b.textContent.trim().toLowerCase() === ip) b.classList.add('active');
+                });
+            }
+        }
+
+        function autoDiscover() {
+            var result = $('scanResult');
+            result.textContent = '🔎 Menelusuri jalur lokal...';
+            var pool = ['192.168.4.1', '192.168.100.101', '192.168.1.100', '192.168.0.100'];
+            var found = false;
+            var checked = 0;
+
+            pool.forEach(function(ip) {
+                if (found) return;
+                try {
+                    var test = new WebSocket('ws://' + ip + ':81/');
+                    var timer = setTimeout(function() {
+                        if (found) return;
+                        test.close();
+                        checked++;
+                        if (checked >= pool.length && !found) result.textContent = '⚠️ ESP32 tidak terdeteksi otomatis.';
+                    }, 1400);
+
+                    test.onopen = function() {
+                        if (found) return;
+                        found = true;
+                        clearTimeout(timer);
+                        test.close();
+                        result.textContent = '✅ Berhasil mendeteksi: ' + ip;
+                        $('ipInput').value = ip;
+                    };
+                    test.onerror = function() {
+                        clearTimeout(timer);
+                        checked++;
+                        if (checked >= pool.length && !found) result.textContent = '⚠️ ESP32 tidak terdeteksi.';
+                    };
+                } catch (e) {
+                    checked++;
+                }
+            });
+        }
+
+        // ============================================================
+        //  DYNAMIC SETTINGS & JSON BACKUP
+        // ============================================================
+        function renderSettingsForm() {
+            var container = $('settingsFormList');
+            container.innerHTML = pins.map(function(p) {
+                return '<div class="settings-row" data-id="' + p.id + '">' +
+                    '<label>' + p.id + ' Label:</label>' +
+                    '<input type="text" class="pin-label-input" value="' + p.label + '">' +
+                    '<label style="flex:0; margin-left: 8px;">GPIO:</label>' +
+                    '<input type="number" class="pin-gpio-input" value="' + p.gpio + '">' +
+                '</div>';
+            }).join('');
+        }
+
+        function applyConfiguration() {
+            var rows = document.querySelectorAll('.settings-row');
+            rows.forEach(function(row) {
+                var id = row.getAttribute('data-id');
+                var label = row.querySelector('.pin-label-input').value.trim();
+                var gpio = parseInt(row.querySelector('.pin-gpio-input').value);
+
+                var p = pins.find(function(x) { return x.id === id; });
+                if (p) {
+                    if (label) p.label = label;
+                    if (!isNaN(gpio)) p.gpio = gpio;
+                }
+            });
+
+            ttsEnabled = $('ttsToggle').checked;
+            try {
+                localStorage.setItem('ttsEnabled', ttsEnabled);
+                localStorage.setItem('pinsConfig', JSON.stringify(pins));
+            } catch (_) {}
+
+            log('Konfigurasi perangkat keras disimpan', 'info');
+            saveAndConnect();
+        }
+
+        function exportConfigJSON() {
+            try {
+                var dataStr = JSON.stringify({ pins: pins, ttsEnabled: ttsEnabled, espIP: espIP }, null, 2);
+                $('backupArea').value = dataStr;
+                log('Konfigurasi JSON diekspor ke area teks', 'info');
+            } catch (_) { alert('Gagal ekspor data.'); }
+        }
+
+        function importConfigJSON() {
+            var raw = $('backupArea').value.trim();
+            if (!raw) { alert('Area teks kosong!'); return; }
+            try {
+                var parsed = JSON.parse(raw);
+                if (parsed.pins) pins = parsed.pins;
+                if (parsed.ttsEnabled !== undefined) ttsEnabled = parsed.ttsEnabled;
+                if (parsed.espIP) espIP = parsed.espIP;
+
+                localStorage.setItem('pinsConfig', JSON.stringify(pins));
+                localStorage.setItem('ttsEnabled', ttsEnabled);
+                localStorage.setItem('espIP', espIP);
+
+                renderSettingsForm();
+                $('ttsToggle').checked = ttsEnabled;
+                $('ipInput').value = espIP;
+                log('Konfigurasi JSON berhasil diimpor', 'on');
+                speakAlert('Konfigurasi diimpor');
+            } catch (e) {
+                alert('Struktur JSON salah: ' + e.message);
+            }
+        }
+
+        // ============================================================
+        //  WEBSOCKET (dengan penanganan error lebih baik)
+        // ============================================================
+        function connectWebSocket() {
+            if (ws) { try { ws.close(); } catch (_) {} ws = null; }
+            if (!espIP) return;
+            var url = 'ws://' + espIP + ':81/';
+            var statusDot = $('wsStatus');
+            if (statusDot) statusDot.className = 'status-dot connecting';
+            log('Menghubungi WebSocket: ' + url, 'info');
+
+            try {
+                ws = new WebSocket(url);
+            } catch (e) {
+                log('Inisiasi koneksi gagal: ' + e.message, 'error');
+                reconnect();
+                return;
+            }
+
+            ws.onopen = function() {
+                reconnectAttempts = 0;
+                if (statusDot) statusDot.className = 'status-dot online';
+                log('Koneksi WebSocket terhubung!', 'on');
+                safeSend({ cmd: 'getPins' });
+                safeSend({ cmd: 'getSensor' });
+                startPing();
+            };
+
+            ws.onclose = function(event) {
+                if (statusDot) statusDot.className = 'status-dot offline';
+                var lat = $('latencyDisplay');
+                if (lat) lat.textContent = '- ms';
+                log('Koneksi terputus (kode: ' + event.code + '). Mengantre penyambungan...', 'warn');
+                stopPing();
+                reconnect();
+            };
+
+            ws.onerror = function() {
+                log('Kesalahan transmisi WebSocket', 'error');
+            };
+
+            ws.onmessage = function(ev) {
+                var data;
+                try { data = JSON.parse(ev.data); } catch (_) { return; }
+
+                if (data.type === 'pong') {
+                    var rtt = Date.now() - data.ts;
+                    var badge = $('latencyDisplay');
+                    if (badge) {
+                        badge.textContent = rtt + ' ms';
+                        if (rtt < 80) badge.style.color = 'var(--accent-green)';
+                        else if (rtt < 200) badge.style.color = 'var(--accent-orange)';
+                        else badge.style.color = 'var(--accent-red)';
+                    }
+                }
+                else if (data.type === 'pins') {
+                    var remote = data.pins || [];
+                    remote.forEach(function(rp) {
+                        var local = pins.find(function(x) { return x.id === rp.id; });
+                        if (local && local.state !== rp.state) {
+                            local.state = rp.state;
+                            updatePinUI(local.id, rp.state);
+                        }
+                    });
+                    var wifiEl = $('wifiStatus');
+                    if (wifiEl) wifiEl.textContent = data.wifi || 'Hybrid';
+                    if (data.alarm !== undefined) updateAlarmUI(data.alarm);
+                    if (data.sensor !== undefined) updateSensorUI(data.sensor);
+                    if (data.indicator !== undefined) updateIndicatorUI(data.indicator);
+                }
+                else if (data.type === 'update') {
+                    var p = pins.find(function(x) { return x.id === data.pin; });
+                    if (p && p.state !== data.state) {
+                        p.state = data.state;
+                        updatePinUI(p.id, data.state);
+                        log(p.label + ' -> ' + (data.state ? 'NYALA' : 'MATI'), data.state ? 'on' : 'off');
+                    }
+                }
+                else if (data.type === 'alarm') {
+                    updateAlarmUI(data.state);
+                    log(data.state ? 'ALARM AKTIF TERDETEKSI!' : 'Sirene diredam', data.state ? 'error' : 'on');
+                }
+                else if (data.type === 'sensor') {
+                    updateSensorUI(data.state);
+                    if (data.state) log('Sensor mendeteksi anomali fisik!', 'warn');
+                }
+                else if (data.type === 'indicator') {
+                    updateIndicatorUI(data.state);
+                }
+                else if (data.type === 'sensorData') {
+                    if (data.temp !== undefined) {
+                        var tempEl = $('sensorTemp');
+                        if (tempEl) tempEl.textContent = data.temp.toFixed(1);
+                        var tempPct = Math.min(100, Math.max(0, (data.temp / 50) * 100));
+                        var tempBar = $('tempBar');
+                        if (tempBar) tempBar.style.width = tempPct + '%';
+                    }
+                    if (data.hum !== undefined) {
+                        var humEl = $('sensorHum');
+                        if (humEl) humEl.textContent = data.hum.toFixed(1);
+                        var humBar = $('humBar');
+                        if (humBar) humBar.style.width = Math.min(100, Math.max(0, data.hum)) + '%';
+                    }
+                    var timeEl = $('sensorTime');
+                    if (timeEl) timeEl.textContent = data.time || new Date().toLocaleTimeString('id-ID');
+                }
+            };
+        }
+
+        function safeSend(obj) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                try { ws.send(JSON.stringify(obj)); } catch (e) { log('Gagal mengirim: ' + e.message, 'error'); }
+            }
+        }
+
+        function reconnect() {
+            reconnectAttempts++;
+            var delay = Math.min(1500 * Math.pow(1.5, reconnectAttempts), 12000);
+            clearTimeout(reconnectTimer);
+            reconnectTimer = setTimeout(connectWebSocket, delay);
+        }
+
+        function startPing() {
+            stopPing();
+            pingTimer = setInterval(function() {
+                safeSend({ cmd: 'ping', ts: Date.now() });
+            }, pingInterval);
+        }
+
+        function stopPing() {
+            if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
+        }
+
+        // ============================================================
+        //  VOICE (TTS & RECOGNITION) - tetap sama, hanya tambah cek null
+        // ============================================================
+        function speakAlert(text) {
+            if (!ttsEnabled) return;
+            try {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    var ut = new SpeechSynthesisUtterance(text);
+                    ut.lang = 'id-ID';
+                    window.speechSynthesis.speak(ut);
+                }
+            } catch (_) {}
+        }
+
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            var recognition = new SpeechRecognition();
+            recognition.lang = 'id-ID';
+            recognition.continuous = false;
+
+            var mic = $('micBtn');
+            var vs = $('voiceStatus');
+            var vicon = $('voiceIcon');
+
+            if (mic) {
+                mic.addEventListener('click', function() {
+                    try {
+                        recognition.start();
+                        if (vs) vs.textContent = 'Mendengarkan...';
+                        mic.classList.add('listening');
+                        if (vicon) vicon.classList.add('active');
+                    } catch (e) { log('Gagal mengakses mik: ' + e.message, 'error'); }
+                });
+            }
+
+            recognition.onresult = function(event) {
+                var text = event.results[0][0].transcript.toLowerCase();
+                log('🎤 Perintah suara: "' + text + '"', 'info');
+                if (vs) vs.textContent = 'Didengar: "' + text + '"';
+                parseVoiceCommand(text);
+            };
+
+            recognition.onspeechend = function() {
+                recognition.stop();
+                if (mic) mic.classList.remove('listening');
+                if (vicon) vicon.classList.remove('active');
+            };
+
+            recognition.onerror = function() {
+                if (vs) vs.textContent = 'Gagal memproses suara';
+                if (mic) mic.classList.remove('listening');
+                if (vicon) vicon.classList.remove('active');
+            };
+        } else {
+            var vb = $('voiceBar');
+            if (vb) vb.style.display = 'none';
+        }
+
+        function parseVoiceCommand(cmd) {
+            var t = cmd.trim().toLowerCase();
+            t = t.replace(/\bsatu\b/g, '1').replace(/\bdua\b/g, '2').replace(/\btiga\b/g, '3');
+
+            var onWords = ['nyalakan', 'hidupkan', 'on', 'nyala', 'aktifkan'];
+            var offWords = ['matikan', 'padamkan', 'off', 'mati', 'nonaktifkan'];
+
+            if (t.includes('matikan alarm') || t.includes('alarm off') || t.includes('stop alarm') || t.includes('senyap')) {
+                muteAlarm();
+                return;
+            }
+
+            var handled = false;
+            pins.forEach(function(p) {
+                var name = p.label.toLowerCase();
+                if (t.includes(name) || t.includes(p.id.toLowerCase())) {
+                    if (p.mode === 'toggle') {
+                        var wantOn = onWords.some(function(w) { return t.includes(w); });
+                        var wantOff = offWords.some(function(w) { return t.includes(w); });
+
+                        if (wantOn && !p.state) { togglePin(p.id); handled = true; }
+                        else if (wantOff && p.state) { togglePin(p.id); handled = true; }
+                        else if (!wantOn && !wantOff) { togglePin(p.id); handled = true; }
+                    } else if (p.mode === 'momentary') {
+                        momentaryOn(p.id);
+                        setTimeout(function() { momentaryOff(p.id); }, 1500);
+                        handled = true;
+                    }
+                }
+            });
+
+            if (!handled && vs) vs.textContent = 'Perintah tidak dikenali.';
+        }
+
+        // ============================================================
+        //  PRESET SCENE CONTROLLER
+        // ============================================================
+        function triggerScene(mode) {
+            if (mode === 'home') {
+                log('Mengaktifkan preset: Mode Rumah', 'info');
+                speakAlert('Mengaktifkan mode rumah');
+                pins.forEach(function(p) {
+                    if (p.mode === 'toggle') {
+                        var target = (p.id === 'SW1' || p.id === 'SW2');
+                        if (p.state !== target) {
+                            p.state = target;
+                            updatePinUI(p.id, target);
+                            safeSend({ cmd: 'toggle', pin: p.id });
+                        }
+                    }
+                });
+            } else if (mode === 'away') {
+                log('Mengaktifkan preset: Mode Pergi', 'info');
+                speakAlert('Mengaktifkan mode pergi');
+                pins.forEach(function(p) {
+                    if (p.mode === 'toggle' && p.state === true) {
+                        p.state = false;
+                        updatePinUI(p.id, false);
+                        safeSend({ cmd: 'toggle', pin: p.id });
+                    }
+                });
+            }
+        }
+
+        // ============================================================
+        //  PIN & COMPONENT RENDERING (perbaikan: timer restart on change)
+        // ============================================================
+        function renderPins() {
+            var toggles = pins.filter(function(x) { return x.mode === 'toggle'; });
+            var pinGrid = $('pinGrid');
+            if (pinGrid) {
+                pinGrid.innerHTML = toggles.map(function(p) {
+                    return '<div class="pin-card" id="card-' + p.id + '">' +
+                        '<div class="pin-icon"><svg viewBox="0 0 24 24"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg></div>' +
+                        '<div class="pin-name">' + p.label + '</div>' +
+                        '<div class="pin-gpio">GPIO ' + p.gpio + '</div>' +
+                        '<button class="toggle-switch" id="btn-' + p.id + '"></button>' +
+                        '<select class="pin-timer" id="timer-' + p.id + '">' +
+                            '<option value="0">Tanpa Timer</option>' +
+                            '<option value="5">5 Detik</option>' +
+                            '<option value="10">10 Detik</option>' +
+                            '<option value="30">30 Detik</option>' +
+                            '<option value="60">1 Menit</option>' +
+                            '<option value="300">5 Menit</option>' +
+                        '</select>' +
+                    '</div>';
+                }).join('');
+            }
+
+            var moments = pins.filter(function(x) { return x.mode === 'momentary'; });
+            var momGrid = $('momentaryGrid');
+            if (momGrid) {
+                momGrid.innerHTML = moments.map(function(p) {
+                    return '<div class="pin-card" id="card-' + p.id + '">' +
+                        '<div class="pin-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg></div>' +
+                        '<div class="pin-name">' + p.label + '</div>' +
+                        '<div class="pin-gpio">GPIO ' + p.gpio + '</div>' +
+                        '<button class="momentary-btn" id="btn-' + p.id + '">TEKAN</button>' +
+                    '</div>';
+                }).join('');
+            }
+
+            // Bind Events for toggles
+            toggles.forEach(function(p) {
+                var btn = $('btn-' + p.id);
+                if (btn) btn.addEventListener('click', function() { togglePin(p.id); });
+                var sel = $('timer-' + p.id);
+                if (sel) {
+                    sel.value = p.timerLimit || 0;
+                    sel.addEventListener('change', function() {
+                        p.timerLimit = parseInt(this.value);
+                        // Jika pin sedang ON, restart timer dengan nilai baru
+                        if (p.state && p.timerLimit > 0) {
+                            clearLocalTimer(p.id);
+                            startLocalTimer(p.id, p.timerLimit);
+                        } else if (p.state && p.timerLimit === 0) {
+                            clearLocalTimer(p.id);
+                        }
+                    });
+                }
+                updatePinUI(p.id, p.state);
+            });
+
+            // Bind Events for momentary buttons dengan debounce lebih baik
+            moments.forEach(function(p) {
+                var btn = $('btn-' + p.id);
+                if (!btn) return;
+                var active = false;
+
+                var start = function(e) {
+                    e.preventDefault();
+                    if (momentaryActive[p.id]) return;
+                    momentaryActive[p.id] = true;
+                    active = true;
+                    momentaryOn(p.id);
+                };
+
+                var end = function(e) {
+                    e.preventDefault();
+                    if (!active) return;
+                    active = false;
+                    momentaryOff(p.id);
+                    // reset debounce setelah lepas, beri jeda kecil
+                    setTimeout(function() { momentaryActive[p.id] = false; }, 300);
+                };
+
+                btn.addEventListener('mousedown', start);
+                btn.addEventListener('mouseup', end);
+                btn.addEventListener('mouseleave', end);
+                btn.addEventListener('touchstart', start, { passive: false });
+                btn.addEventListener('touchend', end, { passive: false });
+                btn.addEventListener('touchcancel', end, { passive: false });
+            });
+        }
+
+        function updatePinUI(id, state) {
+            var card = $('card-' + id);
+            var btn = $('btn-' + id);
+            var p = pins.find(function(x) { return x.id === id; });
+            if (!p || !card || !btn) return;
+
+            if (p.mode === 'toggle') {
+                card.classList.toggle('on', state);
+                btn.classList.toggle('on', state);
+                if (state && p.timerLimit > 0) {
+                    startLocalTimer(id, p.timerLimit);
+                } else if (!state) {
+                    clearLocalTimer(id);
+                }
+            } else {
+                card.classList.toggle('on', state);
+                btn.classList.toggle('active', state);
+                btn.textContent = state ? 'HOLD' : 'TEKAN';
+            }
+        }
+
+        // ============================================================
+        //  LOCAL CONTROLLER COUNTDOWN TIMERS
+        // ============================================================
+        function startLocalTimer(id, sec) {
+            clearLocalTimer(id);
+            var card = $('card-' + id);
+            if (!card) return;
+            var overlay = document.createElement('div');
+            overlay.className = 'countdown-indicator';
+            overlay.id = 'cnt-' + id;
+            card.appendChild(overlay);
+
+            var remaining = sec;
+            overlay.textContent = formatSec(remaining);
+
+            autoOffTimers[id] = setInterval(function() {
+                remaining--;
+                if (remaining <= 0) {
+                    log('Waktu timer habis, menonaktifkan ' + id, 'off');
+                    clearLocalTimer(id);
+                    var p = pins.find(function(x) { return x.id === id; });
+                    if (p && p.state) togglePin(id);
+                } else {
+                    var cnt = $('cnt-' + id);
+                    if (cnt) cnt.textContent = formatSec(remaining);
+                }
+            }, 1000);
+        }
+
+        function clearLocalTimer(id) {
+            if (autoOffTimers[id]) { clearInterval(autoOffTimers[id]); delete autoOffTimers[id]; }
+            var overlay = $('cnt-' + id);
+            if (overlay) overlay.remove();
+            var select = $('timer-' + id);
+            if (select) select.value = "0";
+        }
+
+        function formatSec(s) {
+            var min = Math.floor(s / 60);
+            var sec = s % 60;
+            return (min < 10 ? '0' : '') + min + ':' + (sec < 10 ? '0' : '') + sec;
+        }
+
+        // ============================================================
+        //  CONTROLLER ACTIONS (perbaikan debounce & safe send)
+        // ============================================================
+        function togglePin(id) {
+            if (toggleDebounce[id]) return;
+            toggleDebounce[id] = true;
+            setTimeout(function() { toggleDebounce[id] = false; }, 200);
+
+            var p = pins.find(function(x) { return x.id === id; });
+            if (!p || p.mode !== 'toggle') return;
+
+            var next = !p.state;
+            p.state = next;
+            updatePinUI(id, next);
+
+            log(p.label + ' -> ' + (next ? 'ON' : 'OFF'), next ? 'on' : 'off');
+            speakAlert(p.label + (next ? ' dinyalakan' : ' dimatikan'));
+
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                // rollback jika tidak terkoneksi setelah 1 detik
+                setTimeout(function() {
+                    if (p.state === next) {
+                        p.state = !next;
+                        updatePinUI(id, p.state);
+                    }
+                }, 1000);
+                return;
+            }
+            safeSend({ cmd: 'toggle', pin: id });
+        }
+
+        function momentaryOn(id) {
+            var p = pins.find(function(x) { return x.id === id; });
+            if (!p || p.mode !== 'momentary') return;
+            p.state = true;
+            updatePinUI(id, true);
+            safeSend({ cmd: 'momentary', pin: id, action: 'on' });
+        }
+
+        function momentaryOff(id) {
+            var p = pins.find(function(x) { return x.id === id; });
+            if (!p || p.mode !== 'momentary') return;
+            p.state = false;
+            updatePinUI(id, false);
+            safeSend({ cmd: 'momentary', pin: id, action: 'off' });
+        }
+
+        function allOn() {
+            pins.forEach(function(p) { if (p.mode === 'toggle' && !p.state) togglePin(p.id); });
+        }
+
+        function allOff() {
+            pins.forEach(function(p) { if (p.mode === 'toggle' && p.state) togglePin(p.id); });
+        }
+
+        // ============================================================
+        //  PWM CONTROLLER
+        // ============================================================
+        function updatePWM(val) {
+            var pwmVal = $('pwmValue');
+            if (pwmVal) pwmVal.textContent = val;
+            safeSend({ cmd: 'pwm', pin: 4, value: parseInt(val) });
+        }
+
+        function setPWMValue(val) {
+            var slider = $('pwmSlider');
+            if (slider) slider.value = val;
+            updatePWM(val);
+        }
+
+        // ============================================================
+        //  ALARM SYSTEM (dengan pengecekan null)
+        // ============================================================
+        function updateAlarmUI(state) {
+            var was = alarmActive;
+            alarmActive = !!state;
+            if (alarmActive && !was) startAlarmLoop();
+            if (!alarmActive && was) { stopAlarmLoop(); clearAlarmNotification(); }
+
+            var card = $('alarmCard');
+            var status = $('alarmStatusText');
+            var btn = $('btnMute');
+
+            if (card) card.classList.toggle('active', alarmActive);
+            if (status) {
+                if (alarmActive) {
+                    status.className = 'alarm-status-text on';
+                    status.textContent = '● BAHAYA - LOG PERGERAKAN TERDETEKSI!';
+                } else {
+                    status.className = 'alarm-status-text off';
+                    status.textContent = '● Aman & Kondusif';
+                }
+            }
+            if (btn) btn.disabled = !alarmActive;
+        }
+
+        function updateSensorUI(state) {
+            sensorTriggered = !!state;
+            var dot = $('sensorDot');
+            var txt = $('sensorText');
+            if (dot) dot.classList.toggle('triggered', sensorTriggered);
+            if (txt) txt.textContent = sensorTriggered ? 'Pergerakan Terdeteksi!' : 'Sensor Kondusif';
+        }
+
+        function updateIndicatorUI(state) {
+            var led = $('indicatorLed');
+            if (led) led.classList.toggle('on', !!state);
+        }
+
+        function muteAlarm() {
+            safeSend({ cmd: 'muteAlarm' });
+            updateAlarmUI(false);
+            log('Sirene dinonaktifkan secara manual', 'off');
+        }
+
+        function initAudio() {
+            if (!audioCtx) {
+                try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (_) {}
+            }
+        }
+
+        function startAlarmLoop() {
+            if (alarmLoopTimer) return;
+            log('🔔 SIRINE AKTIF', 'warn');
+            speakAlert('Peringatan! Sensor keamanan mendeteksi gerakan!');
+
+            try {
+                initAudio();
+                if (audioCtx) {
+                    if (alarmOsc) { try { alarmOsc.stop(); } catch(_){} }
+                    alarmOsc = audioCtx.createOscillator();
+                    alarmGain = audioCtx.createGain();
+                    alarmOsc.type = 'sawtooth';
+                    alarmOsc.frequency.value = 850;
+                    alarmGain.gain.value = 0.15;
+                    alarmOsc.connect(alarmGain);
+                    alarmGain.connect(audioCtx.destination);
+                    alarmOsc.start();
+
+                    var high = true;
+                    alarmLoopTimer = setInterval(function() {
+                        if (!alarmOsc) return;
+                        var target = high ? 1300 : 650;
+                        alarmOsc.frequency.linearRampToValueAtTime(target, audioCtx.currentTime + 0.3);
+                        high = !high;
+                    }, 400);
+                }
+            } catch (_) {}
+
+            var vibe = setInterval(function() {
+                if (!alarmActive) { clearInterval(vibe); return; }
+                if ('vibrate' in navigator) {
+                    try { navigator.vibrate([400, 200, 400, 200]); } catch (_) {}
+                }
+            }, 1500);
+
+            if (window.cordova && cordova.plugins && cordova.plugins.backgroundMode) {
+                var bg = cordova.plugins.backgroundMode;
+                bg.wakeUp();
+                setTimeout(function() { bg.unlock(); }, 500);
+            }
+
+            showAlarmNotification();
+            window._vibe = vibe;
+        }
+
+        function stopAlarmLoop() {
+            if (alarmLoopTimer) { clearInterval(alarmLoopTimer); alarmLoopTimer = null; }
+            if (window._vibe) { clearInterval(window._vibe); window._vibe = null; }
+            if (alarmOsc) { try { alarmOsc.stop(); } catch (_) {} alarmOsc = null; }
+            alarmGain = null;
+            if ('vibrate' in navigator) { try { navigator.vibrate(0); } catch (_) {} }
+        }
+
+        function showAlarmNotification() {
+            if (window.cordova && cordova.plugins && cordova.plugins.notification && cordova.plugins.notification.local) {
+                cordova.plugins.notification.local.schedule({
+                    id: 888,
+                    title: 'PERINGATAN ALARM!',
+                    text: 'Anomali terdeteksi di area jangkauan sensor!',
+                    foreground: true,
+                    wakeUpScreen: true,
+                    vibrate: true,
+                    sound: 'res://platform_default',
+                    androidOngoing: true,
+                    androidChannelId: 'esp-alarm-channel',
+                    androidChannelName: 'ESP-C3 Alarm System',
+                    androidChannelImportance: 'high'
+                });
+            }
+        }
+
+        function clearAlarmNotification() {
+            if (window.cordova && cordova.plugins && cordova.plugins.notification && cordova.plugins.notification.local) {
+                cordova.plugins.notification.local.cancel(888);
+            }
+        }
+
+        // ============================================================
+        //  UTILITIES, EVENT LOGS & CSV EXPORT
+        // ============================================================
+        function forceSync() {
+            safeSend({ cmd: 'getPins' });
+            safeSend({ cmd: 'getSensor' });
+            log('Melakukan sinkronisasi data fisik...', 'info');
+        }
+
+        function log(msg, type) {
+            var time = new Date().toLocaleTimeString('id-ID');
+            activityLog.push({ time: time, msg: msg });
+
+            var cls = 'info';
+            if (type === 'on') cls = 'on';
+            else if (type === 'off' || type === 'error') cls = 'off';
+            else if (type === 'warn') cls = 'warn';
+
+            var box = $('logBox');
+            if (!box) return;
+            var el = document.createElement('div');
+            el.className = 'log-entry';
+            el.innerHTML = '<span class="log-time">[' + time + ']</span><span class="log-msg ' + cls + '">' + msg + '</span>';
+            box.appendChild(el);
+            box.scrollTop = box.scrollHeight;
+
+            while (box.children.length > 60) box.removeChild(box.firstChild);
+
+            logCount++;
+            var lc = $('logCount');
+            if (lc) lc.textContent = logCount;
+        }
+
+        function clearLogs() {
+            var box = $('logBox');
+            if (box) box.innerHTML = '';
+            activityLog = [];
+            logCount = 0;
+            var lc = $('logCount');
+            if (lc) lc.textContent = '0';
+            log('Seluruh catatan log dibersihkan.', 'info');
+        }
+
+        function exportLogToCSV() {
+            if (activityLog.length === 0) { alert('Belum ada log yang tercatat!'); return; }
+            try {
+                var csv = 'data:text/csv;charset=utf-8,Waktu,Catatan Log\r\n';
+                activityLog.forEach(function(row) {
+                    var safeMsg = row.msg.replace(/"/g, '""');
+                    csv += '"' + row.time + '","' + safeMsg + '"\r\n';
+                });
+
+                var link = document.createElement('a');
+                link.setAttribute('href', encodeURI(csv));
+                link.setAttribute('download', 'esp32_activity_log.csv');
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                log('Riwayat log aktivitas berhasil diekspor ke CSV', 'info');
+            } catch (_) { alert('Gagal ekspor file CSV.'); }
+        }
+    </script>
+</body>
+</html>
