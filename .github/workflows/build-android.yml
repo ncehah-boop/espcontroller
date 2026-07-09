@@ -47,12 +47,13 @@ jobs:
       - name: Generate App Icon using Node.js
         run: |
           mkdir -p res
-          # Base64 dari ikon biru standar Cordova
-          const iconBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAARnAAAEZwHCAKQrAAAAJElEQVR4nO3BMQEAAADCoPVPbQwfoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIC3Ac+QAQF9VjYhAAAAAElFTkSuQmCC';
-          const fs = require('fs');
-          const buf = Buffer.from(iconBase64, 'base64');
-          fs.writeFileSync('res/icon.png', buf);
-          console.log('Icon generated successfully at res/icon.png');
+          node -e "
+            const fs = require('fs');
+            const iconBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAARnAAAEZwHCAKQrAAAAJElEQVR4nO3BMQEAAADCoPVPbQwfoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIC3Ac+QAQF9VjYhAAAAAElFTkSuQmCC';
+            const buf = Buffer.from(iconBase64, 'base64');
+            fs.writeFileSync('res/icon.png', buf);
+            console.log('Icon generated successfully at res/icon.png');
+          "
 
       - name: Create Cordova project & configure
         run: |
@@ -82,12 +83,9 @@ jobs:
       - name: Ensure Launcher Intent Filter
         run: |
           cd espapp
-          # Memastikan MainActivity memiliki intent-filter LAUNCHER
-          # Kadang plugin background-mode bisa menimpa ini jika tidak dikonfigurasi dengan benar
           MANIFEST="platforms/android/app/src/main/AndroidManifest.xml"
           if ! grep -q "android.intent.category.LAUNCHER" "$MANIFEST"; then
-            echo "WARNING: Launcher category missing! Attempting to fix..."
-            # Menambahkan intent-filter secara manual jika hilang
+            echo "WARNING: Launcher category missing! Fixing..."
             sed -i '/<activity android:name="MainActivity"/a \
               <intent-filter>\
                 <action android:name="android.intent.action.MAIN" />\
