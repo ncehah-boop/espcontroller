@@ -1,43 +1,85 @@
-<?xml version='1.0' encoding='utf-8'?>
-<widget id="com.esp32.c3.pro" version="1.0.0" 
-    xmlns="http://www.w3.org/ns/widgets" 
-    xmlns:cdv="http://cordova.apache.org/ns/1.0"
-    xmlns:android="http://schemas.android.com/apk/res/android">
-    
-    <name>ESP32-C3 Controller Pro</name>
-    <description>Advanced controller for ESP32-C3 with voice control, background mode, and alarm system.</description>
-    <author email="dev@example.com">ESP32 Developer</author>
+name: Build Android Debug APK
 
-    <content src="index.html" />
-    <access origin="*" />
-    <allow-intent href="http://*/*" />
-    <allow-intent href="https://*/*" />
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
 
-    <!-- Platform: Android -->
-    <platform name="android">
-        <preference name="AndroidXEnabled" value="true" />
-        <preference name="GradlePluginKotlinEnabled" value="true" />
-        <preference name="GradlePluginKotlinCodeStyle" value="official" />
-        
-        <!-- Permissions required by the app's features -->
-        <config-file parent="/manifest" target="AndroidManifest.xml">
-            <uses-permission android:name="android.permission.INTERNET" />
-            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-            <uses-permission android:name="android.permission.RECORD_AUDIO" />
-            <uses-permission android:name="android.permission.VIBRATE" />
-            <uses-permission android:name="android.permission.WAKE_LOCK" />
-            <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-            <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-            <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
-            <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-            
-            <!-- Allow HTTP traffic to ESP32 (usually on local network) -->
-            <application android:usesCleartextTraffic="true" />
-        </config-file>
-    </platform>
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-    <!-- General Preferences -->
-    <preference name="DisallowOverscroll" value="true" />
-    <preference name="BackgroundColor" value="0xff0b0e17" />
-    <preference name="Orientation" value="portrait" />
-</widget>
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Install Cordova
+        run: npm install -g cordova
+
+      - name: Setup Android SDK Environment
+        run: |
+          # GitHub Actions runner sudah memiliki Android SDK terinstal
+          # Kita hanya perlu mengatur environment variable-nya
+          export ANDROID_HOME=/usr/local/lib/android/sdk
+          export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+          
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          echo "PATH=$PATH" >> $GITHUB_ENV
+
+      - name: Install Required Android Packages
+        run: |
+          # Install platform dan build-tools secara manual menggunakan sdkmanager
+          # Menggunakan API 33 dan Build-tools 33.0.2 yang stabil
+          yes | sdkmanager "platforms;android-33" "build-tools;33.0.2" "platform-tools"
+
+      - name: Accept Android Licenses
+        run: |
+          yes | sdkmanager --licenses || true
+
+      - name: Create Cordova project & configure
+        run: |
+          cordova create espapp com.esp32.c3.pro "ESP32-C3 Controller Pro"
+          cd espapp
+          
+          # Salin file konfigurasi dari root repo
+          cp ../config.xml config.xml
+          cp ../index.html www/index.html
+          
+          # Tambahkan platform Android
+          cordova platform add android@latest
+          
+          # Tambahkan plugin inti dan kompatibilitas
+          cordova plugin add cordova-plugin-whitelist
+          cordova plugin add cordova-plugin-device
+          cordova plugin add cordova-plugin-androidx
+          cordova plugin add cordova-plugin-androidx-adapter
+          
+          # Tambahkan plugin fungsional
+          cordova plugin add cordova-plugin-background-mode
+          cordova plugin add cordova-plugin-local-notification
+          cordova plugin add cordova-plugin-vibration
+          cordova plugin add cordova-plugin-android-permissions
+
+      - name: Build Android Debug APK
+        run: |
+          cd espapp
+          cordova build android --debug --verbose
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: esp32-c3-controller-debug
+          path: espapp/platforms/android/app/build/outputs/apk/debug/app-debug.apk
