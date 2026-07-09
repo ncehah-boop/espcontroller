@@ -26,15 +26,15 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y default-jdk android-sdk
 
-      - name: Set up Android SDK environment
+      - name: Set up Android SDK and install build-tools
         run: |
           export ANDROID_HOME=/usr/lib/android-sdk
-          export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
+          export PATH=$PATH:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools
           echo "ANDROID_HOME=/usr/lib/android-sdk" >> $GITHUB_ENV
-          echo "PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools" >> $GITHUB_ENV
-
-      - name: Accept Android SDK licenses
-        run: |
+          echo "PATH=$PATH:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools" >> $GITHUB_ENV
+          # Install build-tools 36.0.0 yang dibutuhkan
+          sdkmanager "build-tools;36.0.0" || true
+          # Setujui lisensi (penting agar build tidak gagal)
           yes | sdkmanager --licenses || true
 
       - name: Create Cordova project & add plugins
@@ -45,15 +45,13 @@ jobs:
           cp ../index.html www/index.html
           # Tambahkan platform android
           cordova platform add android@latest
-
-          # Plugin yang diperlukan (gunakan nama yang benar)
+          # Tambahkan plugin yang diperlukan
           cordova plugin add cordova-plugin-whitelist
           cordova plugin add cordova-plugin-background-mode
           cordova plugin add cordova-plugin-local-notification
-          cordova plugin add cordova-plugin-android-permissions   # <-- yang benar
+          cordova plugin add cordova-plugin-android-permissions   # nama benar
           cordova plugin add cordova-plugin-vibration
           cordova plugin add cordova-plugin-device
-          # Plugin untuk kompatibilitas AndroidX
           cordova plugin add cordova-plugin-androidx
           cordova plugin add cordova-plugin-androidx-adapter
 
