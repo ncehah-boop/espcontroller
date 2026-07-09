@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04 # Menggunakan Ubuntu 22.04 untuk kompatibilitas toolchain terbaik
 
     steps:
       - name: Checkout repository
@@ -18,9 +18,9 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20 # Menggunakan versi terbaru untuk stabilitas
+          node-version: 20
 
-      - name: Setup Java JDK
+      - name: Setup Java JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
@@ -29,40 +29,30 @@ jobs:
       - name: Install Cordova
         run: npm install -g cordova
 
-      - name: Setup Android SDK Environment
+      - name: Setup Android SDK 34
         run: |
           export ANDROID_HOME=/usr/local/lib/android/sdk
           export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
           echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
           echo "PATH=$PATH" >> $GITHUB_ENV
-
-      - name: Install Required Android Packages
-        run: |
-          yes | sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+          
+          # Menginstal SDK 34 secara spesifik
+          yes | sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools" "cmdline-tools;latest"
 
       - name: Accept Android Licenses
         run: |
           yes | sdkmanager --licenses || true
 
-      - name: Generate Adaptive App Icons
+      - name: Generate App Icon
         run: |
           mkdir -p res/android
-          
-          # 1. Buat Background (Lingkaran Biru)
+          # Membuat ikon PNG sederhana berwarna biru
           node -e "
             const fs = require('fs');
-            // Base64 untuk lingkaran biru solid
-            const bgBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAARnAAAEZwHCAKQrAAAAJElEQVR4nO3BMQEAAADCoPVPbQwfoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIC3Ac+QAQF9VjYhAAAAAElFTkSuQmCC';
-            fs.writeFileSync('res/android/background.png', Buffer.from(bgBase64, 'base64'));
-          "
-
-          # 2. Buat Foreground (Teks ESP Putih)
-          node -e "
-            const fs = require('fs');
-            // Base64 untuk teks sederhana atau logo foreground
-            const fgBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAARnAAAEZwHCAKQrAAAAJElEQVR4nO3BMQEAAADCoPVPbQwfoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIC3Ac+QAQF9VjYhAAAAAElFTkSuQmCC'; 
-            // Catatan: Ini placeholder. Di production, gunakan logo asli Anda.
-            fs.writeFileSync('res/android/foreground.png', Buffer.from(fgBase64, 'base64'));
+            // Base64 dari ikon placeholder (biru solid)
+            const iconBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAARnAAAEZwHCAKQrAAAAJElEQVR4nO3BMQEAAADCoPVPbQwfoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIC3Ac+QAQF9VjYhAAAAAElFTkSuQmCC';
+            fs.writeFileSync('res/android/icon.png', Buffer.from(iconBase64, 'base64'));
+            console.log('Icon generated at res/android/icon.png');
           "
 
       - name: Create Cordova project & configure
@@ -74,9 +64,10 @@ jobs:
           cp ../index.html www/index.html
           cp -r ../res res
 
-          cordova platform add android@latest
+          # Menggunakan android@13.0.0 yang lebih stabil daripada @latest (v15)
+          cordova platform add android@13.0.0
           
-          # Plugin wajib untuk manajemen ikon dan splash screen modern
+          # Plugin wajib
           cordova plugin add cordova-plugin-androidx
           cordova plugin add cordova-plugin-androidx-adapter
           cordova plugin add cordova-plugin-splashscreen
