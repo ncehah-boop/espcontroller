@@ -1,39 +1,112 @@
-<?xml version='1.0' encoding='utf-8'?>
-<widget id="com.esp32.c3.pro" version="1.0.0" 
-    xmlns="http://www.w3.org/ns/widgets" 
-    xmlns:cdv="http://cordova.apache.org/ns/1.0"
-    xmlns:android="http://schemas.android.com/apk/res/android">
-    
-    <name>ESP32-C3 Controller Pro</name>
-    <description>Advanced controller for ESP32-C3.</description>
-    <author email="dev@example.com">ESP32 Developer</author>
+name: Build Android Debug APK
 
-    <content src="index.html" />
-    <access origin="*" />
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
 
-    <!-- DEFINISI ADAPTIVE ICON -->
-    <platform name="android">
-        <icon density="ldpi" src="res/android/foreground.png" background="res/android/background.png" />
-        <icon density="mdpi" src="res/android/foreground.png" background="res/android/background.png" />
-        <icon density="hdpi" src="res/android/foreground.png" background="res/android/background.png" />
-        <icon density="xhdpi" src="res/android/foreground.png" background="res/android/background.png" />
-        <icon density="xxhdpi" src="res/android/foreground.png" background="res/android/background.png" />
-        <icon density="xxxhdpi" src="res/android/foreground.png" background="res/android/background.png" />
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-        <preference name="AndroidXEnabled" value="true" />
-        
-        <config-file parent="/manifest" target="AndroidManifest.xml">
-            <uses-permission android:name="android.permission.INTERNET" />
-            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-            <uses-permission android:name="android.permission.RECORD_AUDIO" />
-            <uses-permission android:name="android.permission.VIBRATE" />
-            <uses-permission android:name="android.permission.WAKE_LOCK" />
-            <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-            <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-            <application android:usesCleartextTraffic="true" />
-        </config-file>
-    </platform>
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    <preference name="BackgroundColor" value="#FF0B0E17" />
-    <preference name="Orientation" value="portrait" />
-</widget>
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20 # Menggunakan versi terbaru untuk stabilitas
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Install Cordova
+        run: npm install -g cordova
+
+      - name: Setup Android SDK Environment
+        run: |
+          export ANDROID_HOME=/usr/local/lib/android/sdk
+          export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          echo "PATH=$PATH" >> $GITHUB_ENV
+
+      - name: Install Required Android Packages
+        run: |
+          yes | sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+
+      - name: Accept Android Licenses
+        run: |
+          yes | sdkmanager --licenses || true
+
+      - name: Generate Adaptive App Icons
+        run: |
+          mkdir -p res/android
+          
+          # 1. Buat Background (Lingkaran Biru)
+          node -e "
+            const fs = require('fs');
+            // Base64 untuk lingkaran biru solid
+            const bgBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAARnAAAEZwHCAKQrAAAAJElEQVR4nO3BMQEAAADCoPVPbQwfoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIC3Ac+QAQF9VjYhAAAAAElFTkSuQmCC';
+            fs.writeFileSync('res/android/background.png', Buffer.from(bgBase64, 'base64'));
+          "
+
+          # 2. Buat Foreground (Teks ESP Putih)
+          node -e "
+            const fs = require('fs');
+            // Base64 untuk teks sederhana atau logo foreground
+            const fgBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAARnAAAEZwHCAKQrAAAAJElEQVR4nO3BMQEAAADCoPVPbQwfoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIC3Ac+QAQF9VjYhAAAAAElFTkSuQmCC'; 
+            // Catatan: Ini placeholder. Di production, gunakan logo asli Anda.
+            fs.writeFileSync('res/android/foreground.png', Buffer.from(fgBase64, 'base64'));
+          "
+
+      - name: Create Cordova project & configure
+        run: |
+          cordova create espapp com.esp32.c3.pro "ESP32-C3 Controller Pro"
+          cd espapp
+          
+          cp ../config.xml config.xml
+          cp ../index.html www/index.html
+          cp -r ../res res
+
+          cordova platform add android@latest
+          
+          # Plugin wajib untuk manajemen ikon dan splash screen modern
+          cordova plugin add cordova-plugin-androidx
+          cordova plugin add cordova-plugin-androidx-adapter
+          cordova plugin add cordova-plugin-splashscreen
+          
+          # Plugin fungsional
+          cordova plugin add cordova-plugin-background-mode
+          cordova plugin add cordova-plugin-local-notification
+          cordova plugin add cordova-plugin-vibration
+          cordova plugin add cordova-plugin-android-permissions
+
+      - name: Ensure Launcher Intent Filter
+        run: |
+          cd espapp
+          MANIFEST="platforms/android/app/src/main/AndroidManifest.xml"
+          if ! grep -q "android.intent.category.LAUNCHER" "$MANIFEST"; then
+            echo "Fixing missing LAUNCHER category..."
+            sed -i '/<activity android:name="MainActivity"/a \
+              <intent-filter>\
+                <action android:name="android.intent.action.MAIN" />\
+                <category android:name="android.intent.category.LAUNCHER" />\
+              </intent-filter>' "$MANIFEST"
+          fi
+
+      - name: Build Android Debug APK
+        run: |
+          cd espapp
+          cordova build android --debug --verbose
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: esp32-c3-controller-debug
+          path: espapp/platforms/android/app/build/outputs/apk/debug/app-debug.apk
