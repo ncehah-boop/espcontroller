@@ -44,6 +44,18 @@ jobs:
         run: |
           yes | sdkmanager --licenses || true
 
+      - name: Generate App Icon
+        run: |
+          # Membuat folder res jika belum ada
+          mkdir -p res
+          # Membuat ikon 1024x1024 dengan latar belakang biru dan teks putih
+          convert -size 1024x1024 xc:#2196F3 \
+            -gravity center \
+            -pointsize 200 \
+            -fill white \
+            -annotate +0+0 "ESP" \
+            res/icon.png
+
       - name: Create Cordova project & configure
         run: |
           cordova create espapp com.esp32.c3.pro "ESP32-C3 Controller Pro"
@@ -53,11 +65,13 @@ jobs:
           cp ../config.xml config.xml
           cp ../index.html www/index.html
           
+          # Salin ikon yang baru dibuat ke dalam folder proyek
+          cp -r ../res res
+
           # Tambahkan platform Android
           cordova platform add android@latest
           
-          # PERBAIKAN: HAPUS cordova-plugin-whitelist karena sudah built-in di cordova-android 10+
-          # Tambahkan plugin inti dan kompatibilitas
+          # Tambahkan plugin inti (Whitelist sudah built-in, tidak perlu plugin terpisah)
           cordova plugin add cordova-plugin-device
           cordova plugin add cordova-plugin-androidx
           cordova plugin add cordova-plugin-androidx-adapter
@@ -67,6 +81,7 @@ jobs:
           cordova plugin add cordova-plugin-local-notification
           cordova plugin add cordova-plugin-vibration
           cordova plugin add cordova-plugin-android-permissions
+          cordova plugin add cordova-plugin-splashscreen
 
       - name: Build Android Debug APK
         run: |
