@@ -5,21 +5,23 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
     
     <name>ESP32-C3 Controller Pro</name>
-    <description>Advanced controller for ESP32-C3 with voice control, background mode, and alarm system.</description>
+    <description>Advanced controller for ESP32-C3.</description>
     <author email="dev@example.com">ESP32 Developer</author>
 
     <content src="index.html" />
     <access origin="*" />
-    <allow-intent href="http://*/*" />
-    <allow-intent href="https://*/*" />
 
-    <!-- Platform: Android -->
+    <!-- DEFINISI ADAPTIVE ICON -->
     <platform name="android">
+        <icon density="ldpi" src="res/android/foreground.png" background="res/android/background.png" />
+        <icon density="mdpi" src="res/android/foreground.png" background="res/android/background.png" />
+        <icon density="hdpi" src="res/android/foreground.png" background="res/android/background.png" />
+        <icon density="xhdpi" src="res/android/foreground.png" background="res/android/background.png" />
+        <icon density="xxhdpi" src="res/android/foreground.png" background="res/android/background.png" />
+        <icon density="xxxhdpi" src="res/android/foreground.png" background="res/android/background.png" />
+
         <preference name="AndroidXEnabled" value="true" />
-        <preference name="GradlePluginKotlinEnabled" value="true" />
-        <preference name="GradlePluginKotlinCodeStyle" value="official" />
         
-        <!-- Permissions required by the app's features -->
         <config-file parent="/manifest" target="AndroidManifest.xml">
             <uses-permission android:name="android.permission.INTERNET" />
             <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -28,17 +30,10 @@
             <uses-permission android:name="android.permission.WAKE_LOCK" />
             <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
             <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-            <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
-            <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-            
-            <!-- Allow HTTP traffic to ESP32 (usually on local network) -->
             <application android:usesCleartextTraffic="true" />
         </config-file>
     </platform>
 
-    <!-- General Preferences -->
-    <preference name="DisallowOverscroll" value="true" />
-    <!-- PERBAIKAN FORMAT WARNA DI SINI -->
     <preference name="BackgroundColor" value="#FF0B0E17" />
     <preference name="Orientation" value="portrait" />
 </widget>
