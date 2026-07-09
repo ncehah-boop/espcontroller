@@ -1,0 +1,2609 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; media-src *; connect-src * ws: wss:;" />
+    <title>ESP32-C3 / D1 Mini Controller</title>
+    <style>
+        /* ============================================================
+           THEME VARIABLES (Fresh Dark / Light)
+           ============================================================ */
+        :root {
+            --bg-primary: #080c16;
+            --bg-secondary: #0f182b;
+            --bg-card: #16203a;
+            --bg-card-hover: #1c2a4a;
+            --bg-input: #0a1225;
+            --border-color: #2a3f6a;
+            --border-light: #3a5580;
+            --text-primary: #eef3ff;
+            --text-secondary: #8ba0c8;
+            --text-muted: #5a74a0;
+            --accent-purple: #a78bfa;
+            --accent-blue: #60a5fa;
+            --accent-cyan: #22d3ee;
+            --accent-green: #34d399;
+            --accent-orange: #fb923c;
+            --accent-red: #f87171;
+            --accent-pink: #f472b6;
+            --gradient-primary: linear-gradient(135deg, #a78bfa, #60a5fa);
+            --gradient-success: linear-gradient(135deg, #34d399, #22d3ee);
+            --gradient-danger: linear-gradient(135deg, #f87171, #f472b6);
+            --gradient-warning: linear-gradient(135deg, #fb923c, #fbbf24);
+            --shadow-card: 0 12px 48px rgba(0, 0, 0, 0.6);
+            --shadow-glow: 0 0 60px rgba(96, 165, 250, 0.06);
+            --radius: 18px;
+            --radius-sm: 12px;
+            --radius-full: 9999px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --glass-bg: rgba(22, 32, 58, 0.6);
+            --glass-border: rgba(42, 63, 106, 0.4);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #eef3ff;
+            --bg-secondary: #dce4f5;
+            --bg-card: #ffffff;
+            --bg-card-hover: #f0f4fe;
+            --bg-input: #e8edf8;
+            --border-color: #c8d4e8;
+            --border-light: #b0c0d8;
+            --text-primary: #080c16;
+            --text-secondary: #2a3f6a;
+            --text-muted: #5a74a0;
+            --shadow-card: 0 12px 48px rgba(0, 0, 0, 0.07);
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(200, 212, 232, 0.5);
+        }
+
+        /* ===== RESET & BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            font-size: 16px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transition: background 0.4s, color 0.4s;
+            background-image: radial-gradient(ellipse at 20% 50%, rgba(167, 139, 250, 0.04) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 50%, rgba(96, 165, 250, 0.04) 0%, transparent 60%);
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 10px;
+        }
+
+        .app-container {
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 16px 14px 40px;
+            position: relative;
+        }
+
+        /* ============================================================
+           HEADER
+           ============================================================ */
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0 16px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+            background: transparent;
+        }
+
+        .app-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .app-brand .brand-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-sm);
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 6px 24px rgba(167, 139, 250, 0.3);
+            transition: var(--transition);
+        }
+
+        .app-brand .brand-icon:hover {
+            transform: scale(1.04) rotate(-2deg);
+        }
+
+        .app-brand .brand-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: #fff;
+        }
+
+        .app-brand .brand-text h1 {
+            font-size: 1.2rem;
+            font-weight: 800;
+            letter-spacing: -0.4px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+
+        .app-brand .brand-text .brand-sub {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            letter-spacing: 0.4px;
+            -webkit-text-fill-color: var(--text-secondary);
+            font-weight: 500;
+            opacity: 0.8;
+        }
+
+        .app-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-icon {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+            padding: 7px 14px;
+            border-radius: var(--radius-full);
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            letter-spacing: 0.2px;
+        }
+
+        .btn-icon:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-light);
+            color: var(--text-primary);
+            transform: translateY(-1px);
+        }
+
+        .btn-icon svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        /* ============================================================
+           CONNECT OVERLAY
+           ============================================================ */
+        .connect-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(8, 12, 22, 0.92);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+            animation: fadeIn 0.45s ease;
+            overflow-y: auto;
+        }
+
+        .connect-overlay.hidden {
+            display: none !important;
+        }
+
+        [data-theme="light"] .connect-overlay {
+            background: rgba(238, 243, 255, 0.92);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.96) translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .connect-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 32px 28px;
+            max-width: 520px;
+            width: 100%;
+            text-align: center;
+            box-shadow: var(--shadow-card);
+            transition: background 0.3s;
+            max-height: 92vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .connect-card::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: var(--radius);
+            padding: 1px;
+            background: var(--gradient-primary);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .connect-card .connect-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            margin: 0 auto 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 40px rgba(167, 139, 250, 0.25);
+        }
+
+        .connect-card .connect-icon svg {
+            width: 30px;
+            height: 30px;
+            fill: #fff;
+        }
+
+        .connect-card h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+            letter-spacing: -0.3px;
+        }
+
+        .connect-card .connect-desc {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-bottom: 18px;
+        }
+
+        .connect-card .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .connect-card .input-group .ip-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .connect-card .input-group .ip-row input {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            text-align: center;
+            transition: var(--transition);
+            outline: none;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            font-family: monospace;
+        }
+
+        .connect-card .input-group .ip-row input:focus {
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.15);
+        }
+
+        .connect-card .input-group .ip-row .btn-connect {
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: var(--gradient-primary);
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 6px 28px rgba(167, 139, 250, 0.25);
+            white-space: nowrap;
+            letter-spacing: 0.3px;
+        }
+
+        .connect-card .input-group .ip-row .btn-connect:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 36px rgba(167, 139, 250, 0.35);
+        }
+
+        .connect-card .preset-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 6px;
+            margin-bottom: 16px;
+        }
+
+        .connect-card .preset-row .preset-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 5px 12px;
+            border-radius: var(--radius-full);
+            font-size: 0.65rem;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+        }
+
+        .connect-card .preset-row .preset-btn:hover {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+            border-color: var(--border-light);
+        }
+
+        .connect-card .preset-row .preset-btn.active {
+            border-color: var(--accent-purple);
+            color: var(--accent-purple);
+            background: rgba(167, 139, 250, 0.08);
+        }
+
+        .connect-card .board-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+            margin: 6px 0 14px;
+            flex-wrap: wrap;
+        }
+
+        .connect-card .board-selector label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .connect-card .board-selector select {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 6px 14px;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            outline: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .connect-card .board-selector select:focus {
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1);
+        }
+
+        .connect-card .auto-discover {
+            margin-top: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .connect-card .auto-discover .btn-scan {
+            background: transparent;
+            border: 1px dashed var(--border-color);
+            color: var(--text-muted);
+            padding: 5px 16px;
+            border-radius: var(--radius-full);
+            font-size: 0.65rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .connect-card .auto-discover .btn-scan:hover {
+            border-color: var(--border-light);
+            color: var(--text-secondary);
+        }
+
+        .connect-card .auto-discover .scan-result {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            min-height: 18px;
+        }
+
+        .settings-form {
+            text-align: left;
+            margin: 18px 0;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .settings-section-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 12px;
+        }
+
+        .settings-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .settings-row label {
+            flex: 1;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            min-width: 50px;
+        }
+
+        .settings-row input {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .settings-row input:focus {
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1);
+        }
+
+        .settings-row input.pin-label-input {
+            flex: 1;
+            min-width: 80px;
+        }
+        .settings-row input.pin-gpio-input {
+            width: 64px;
+            text-align: center;
+        }
+
+        .backup-wrap {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border-color);
+            text-align: left;
+        }
+
+        .backup-wrap textarea {
+            width: 100%;
+            height: 52px;
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.7rem;
+            padding: 8px;
+            outline: none;
+            resize: none;
+            margin-bottom: 8px;
+            transition: var(--transition);
+        }
+
+        .backup-wrap textarea:focus {
+            border-color: var(--accent-purple);
+        }
+
+        .connect-card .connect-hint {
+            margin-top: 14px;
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            border-top: 1px solid var(--border-color);
+            padding-top: 12px;
+        }
+
+        /* ============================================================
+           STATUS BAR
+           ============================================================ */
+        .status-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px 16px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            padding: 10px 18px;
+            margin-bottom: 16px;
+            transition: background 0.3s;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .status-item .label {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+
+        .status-dot.online {
+            background: var(--accent-green);
+            box-shadow: 0 0 16px rgba(52, 211, 153, 0.4);
+        }
+
+        .status-dot.offline {
+            background: var(--accent-red);
+            box-shadow: 0 0 16px rgba(248, 113, 113, 0.3);
+        }
+
+        .status-dot.connecting {
+            background: var(--accent-orange);
+            animation: pulse-connect 1s infinite;
+        }
+
+        @keyframes pulse-connect {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.25;
+            }
+        }
+
+        .status-ip {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            color: var(--accent-blue);
+            font-size: 0.75rem;
+            background: var(--bg-input);
+            padding: 2px 12px;
+            border-radius: var(--radius-full);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .status-ip:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card-hover);
+        }
+
+        .status-divider {
+            width: 1px;
+            height: 20px;
+            background: var(--border-color);
+            opacity: 0.5;
+        }
+
+        .status-badge {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            padding: 2px 10px;
+            border-radius: var(--radius-full);
+            color: var(--text-secondary);
+            font-size: 0.65rem;
+            font-weight: 600;
+        }
+
+        /* ============================================================
+           VOICE BAR
+           ============================================================ */
+        .voice-bar {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            padding: 12px 18px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            transition: background 0.3s;
+        }
+
+        .voice-bar .voice-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .voice-bar .voice-info .voice-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .voice-bar .voice-info .voice-icon.active {
+            border-color: var(--accent-orange);
+            background: rgba(251, 146, 60, 0.12);
+            animation: pulse-ring 1.8s infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                box-shadow: 0 0 0 0 rgba(251, 146, 60, 0.25);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(251, 146, 60, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(251, 146, 60, 0);
+            }
+        }
+
+        .voice-bar .voice-info .voice-icon svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .voice-bar .voice-info .voice-icon.active svg {
+            fill: var(--accent-orange);
+        }
+
+        .voice-bar .voice-info .voice-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .voice-bar .voice-info .voice-status-text {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .btn-voice {
+            background: var(--gradient-warning);
+            border: none;
+            color: #fff;
+            padding: 8px 22px;
+            border-radius: var(--radius-full);
+            font-weight: 700;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 6px 24px rgba(251, 146, 60, 0.2);
+            letter-spacing: 0.3px;
+        }
+
+        .btn-voice:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(251, 146, 60, 0.3);
+        }
+
+        .btn-voice.listening {
+            background: var(--gradient-danger);
+            animation: pulse-voice 1.2s infinite;
+        }
+
+        @keyframes pulse-voice {
+            0% {
+                box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.35);
+            }
+            70% {
+                box-shadow: 0 0 0 14px rgba(248, 113, 113, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(248, 113, 113, 0);
+            }
+        }
+
+        .btn-voice svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        /* ============================================================
+           SECTION TITLE
+           ============================================================ */
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin: 22px 0 12px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .section-title .title-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 8px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(8px);
+        }
+
+        .section-title .title-icon svg {
+            width: 14px;
+            height: 14px;
+            fill: var(--text-secondary);
+        }
+
+        .section-title .title-line {
+            flex: 1;
+            height: 1px;
+            background: var(--border-color);
+            opacity: 0.4;
+        }
+
+        /* ============================================================
+           PIN GRID
+           ============================================================ */
+        .pin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+        }
+
+        .pin-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            padding: 18px 12px 16px;
+            text-align: center;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            min-height: 170px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pin-card:hover {
+            border-color: var(--border-light);
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        }
+
+        .pin-card.on {
+            border-color: rgba(167, 139, 250, 0.5);
+            background: rgba(167, 139, 250, 0.06);
+            box-shadow: 0 0 40px rgba(167, 139, 250, 0.04);
+        }
+
+        .pin-card.on::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, rgba(167, 139, 250, 0.06) 0%, transparent 70%);
+            pointer-events: none;
+            border-radius: var(--radius-sm);
+        }
+
+        .pin-card .pin-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin: 0 auto 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+            position: relative;
+            z-index: 1;
+        }
+
+        .pin-card.on .pin-icon {
+            background: var(--gradient-primary);
+            border-color: var(--accent-purple);
+            box-shadow: 0 6px 24px rgba(167, 139, 250, 0.25);
+            transform: scale(1.06);
+        }
+
+        .pin-card .pin-icon svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .pin-card.on .pin-icon svg {
+            fill: #fff;
+        }
+
+        .pin-card .pin-name {
+            font-weight: 700;
+            font-size: 0.85rem;
+            position: relative;
+            z-index: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
+        .pin-card .pin-gpio {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+            font-weight: 500;
+        }
+
+        .toggle-switch {
+            width: 48px;
+            height: 28px;
+            border-radius: 14px;
+            border: none;
+            background: var(--bg-input);
+            position: relative;
+            cursor: pointer;
+            transition: var(--transition);
+            outline: none;
+            z-index: 1;
+            border: 1px solid var(--border-color);
+            margin: 2px auto;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+            top: 2px;
+            left: 2px;
+            transition: var(--transition);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+        }
+
+        .toggle-switch.on {
+            background: var(--gradient-primary);
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 20px rgba(167, 139, 250, 0.2);
+        }
+
+        .toggle-switch.on::after {
+            transform: translateX(20px);
+            background: #fff;
+        }
+
+        .pin-timer {
+            margin-top: 6px;
+            font-size: 0.6rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-full);
+            color: var(--text-secondary);
+            padding: 2px 8px;
+            outline: none;
+            cursor: pointer;
+            width: 100%;
+            text-align: center;
+            transition: var(--transition);
+            z-index: 1;
+            position: relative;
+            height: 24px;
+            font-weight: 500;
+        }
+
+        .pin-timer:focus {
+            border-color: var(--accent-purple);
+        }
+
+        .pin-timer option {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .countdown-indicator {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: var(--accent-orange);
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 8px;
+            border-radius: 6px;
+            z-index: 2;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(251, 146, 60, 0.2);
+        }
+
+        .momentary-btn {
+            padding: 10px 12px;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-weight: 700;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: var(--transition);
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            justify-content: center;
+            width: 100%;
+            z-index: 1;
+            position: relative;
+            min-height: 40px;
+            margin-top: 4px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .momentary-btn svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+        }
+
+        .momentary-btn:active,
+        .momentary-btn.active {
+            background: var(--gradient-warning);
+            border-color: var(--accent-orange);
+            color: #fff;
+            transform: scale(0.94);
+            box-shadow: 0 6px 28px rgba(251, 146, 60, 0.3);
+        }
+
+        /* ============================================================
+           ACTION ROWS & PRESETS
+           ============================================================ */
+        .action-row {
+            display: flex;
+            gap: 10px;
+            margin: 4px 0 14px;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            background: var(--glass-bg);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+            padding: 8px 18px;
+            border-radius: var(--radius-full);
+            font-size: 0.7rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            letter-spacing: 0.2px;
+        }
+
+        .btn-action:hover {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+            transform: translateY(-1px);
+        }
+
+        .btn-action svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+        }
+
+        .btn-action.on {
+            background: var(--gradient-success);
+            border-color: var(--accent-green);
+            color: #fff;
+            box-shadow: 0 6px 24px rgba(52, 211, 153, 0.2);
+        }
+
+        .btn-action.off {
+            background: var(--gradient-danger);
+            border-color: var(--accent-red);
+            color: #fff;
+            box-shadow: 0 6px 24px rgba(248, 113, 113, 0.2);
+        }
+
+        .btn-action.on:hover,
+        .btn-action.off:hover {
+            transform: translateY(-2px);
+        }
+
+        /* ============================================================
+           INDICATOR STATUS LED
+           ============================================================ */
+        .indicator-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            padding: 12px 18px;
+            margin-bottom: 16px;
+            transition: background 0.3s;
+        }
+
+        .indicator-led {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            border: 2px solid var(--border-color);
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+
+        .indicator-led.on {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            box-shadow: 0 0 24px rgba(52, 211, 153, 0.3);
+        }
+
+        .indicator-row .indicator-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .indicator-row .indicator-status {
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-left: auto;
+            color: var(--text-muted);
+        }
+
+        .indicator-row .indicator-status.on {
+            color: var(--accent-green);
+        }
+
+        /* ============================================================
+           ALARM CARD
+           ============================================================ */
+        .alarm-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            padding: 18px 20px 16px;
+            margin-bottom: 16px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .alarm-card.active {
+            border-color: rgba(248, 113, 113, 0.5);
+            background: rgba(248, 113, 113, 0.04);
+            animation: alarm-glow 1.4s infinite alternate;
+        }
+
+        @keyframes alarm-glow {
+            0% {
+                box-shadow: 0 0 20px rgba(248, 113, 113, 0.04);
+            }
+            100% {
+                box-shadow: 0 0 60px rgba(248, 113, 113, 0.12);
+            }
+        }
+
+        .alarm-card .alarm-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .alarm-card .alarm-icon-wrap {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            flex-shrink: 0;
+            transition: var(--transition);
+        }
+
+        .alarm-card.active .alarm-icon-wrap {
+            background: rgba(248, 113, 113, 0.12);
+            border-color: rgba(248, 113, 113, 0.3);
+            animation: pulse-ring 1.8s infinite;
+        }
+
+        .alarm-card .alarm-icon-wrap svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--text-muted);
+            transition: var(--transition);
+        }
+
+        .alarm-card.active .alarm-icon-wrap svg {
+            fill: var(--accent-red);
+        }
+
+        .alarm-card .alarm-info {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .alarm-card .alarm-info .alarm-title {
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .alarm-card .alarm-info .alarm-status-text {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .alarm-card .alarm-info .alarm-status-text.on {
+            color: var(--accent-red);
+            font-weight: 700;
+        }
+
+        .alarm-card .alarm-info .alarm-status-text.off {
+            color: var(--accent-green);
+        }
+
+        .alarm-card .alarm-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .btn-danger {
+            background: var(--gradient-danger);
+            border: none;
+            color: #fff;
+            padding: 7px 20px;
+            border-radius: var(--radius-full);
+            font-weight: 700;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 6px 24px rgba(248, 113, 113, 0.2);
+            letter-spacing: 0.3px;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(248, 113, 113, 0.3);
+        }
+
+        .btn-danger:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-danger svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+        }
+
+        /* ============================================================
+           LOG TERMINAL
+           ============================================================ */
+        .log-container {
+            margin-top: 18px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            transition: background 0.3s;
+        }
+
+        .log-container .log-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 18px;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .log-container .log-header .log-title {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            font-weight: 700;
+        }
+
+        .log-box {
+            padding: 10px 18px;
+            max-height: 150px;
+            overflow-y: auto;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        .log-box .log-entry {
+            display: flex;
+            gap: 10px;
+            padding: 2px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+        }
+
+        .log-box .log-entry .log-time {
+            color: var(--text-muted);
+            flex-shrink: 0;
+            font-size: 0.6rem;
+        }
+
+        .log-box .log-entry .log-msg {
+            word-break: break-word;
+        }
+
+        .log-box .log-entry .log-msg.on {
+            color: var(--accent-green);
+        }
+        .log-box .log-entry .log-msg.off {
+            color: var(--accent-red);
+        }
+        .log-box .log-entry .log-msg.warn {
+            color: var(--accent-orange);
+        }
+        .log-box .log-entry .log-msg.info {
+            color: var(--accent-blue);
+        }
+
+        .sync-row {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 4px;
+            flex-wrap: wrap;
+        }
+
+        .btn-sync {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 6px 16px;
+            border-radius: var(--radius-full);
+            font-size: 0.65rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+        }
+
+        .btn-sync:hover {
+            border-color: var(--border-light);
+            color: var(--text-secondary);
+            background: var(--bg-card);
+            transform: translateY(-1px);
+        }
+
+        .btn-sync svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+        }
+
+        /* ============================================================
+           RESPONSIVE
+           ============================================================ */
+        @media (max-width: 600px) {
+            .app-container {
+                padding: 12px 10px 28px;
+            }
+            .app-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            .app-brand .brand-text h1 {
+                font-size: 1rem;
+            }
+            .app-actions {
+                justify-content: flex-start;
+            }
+            .connect-card {
+                padding: 24px 16px;
+            }
+            .pin-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            .pin-card {
+                padding: 14px 8px 12px;
+                min-height: 155px;
+            }
+            .voice-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .voice-bar .voice-info {
+                justify-content: center;
+            }
+            .btn-voice {
+                justify-content: center;
+                width: 100%;
+            }
+            .alarm-card .alarm-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .alarm-card .alarm-actions {
+                justify-content: flex-start;
+            }
+            .status-bar {
+                padding: 8px 14px;
+                gap: 4px 12px;
+            }
+            .status-divider {
+                display: none;
+            }
+            .indicator-row {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .indicator-row .indicator-status {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .pin-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .connect-card .input-group .ip-row {
+                flex-direction: column;
+            }
+            .connect-card .input-group .ip-row .btn-connect {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================
+    CONNECT OVERLAY
+    ============================================================ -->
+    <div id="connectOverlay" class="connect-overlay">
+        <div class="connect-card">
+            <div class="connect-icon">
+                <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            </div>
+            <h2>Konfigurasi ESP32 / D1 Mini</h2>
+            <p class="connect-desc">Pilih board, atur IP &amp; pemetaan pin</p>
+
+            <div class="input-group">
+                <div class="ip-row">
+                    <input type="text" id="ipInput" placeholder="192.168.4.1" value="192.168.4.1" autofocus />
+                    <button class="btn-connect" onclick="saveAndConnect()">Sambung</button>
+                </div>
+            </div>
+
+            <div class="preset-row" id="presetRow">
+                <span style="font-size:0.6rem;color:var(--text-muted);padding:3px 0;">Preset IP:</span>
+                <button class="preset-btn active" onclick="usePreset('192.168.4.1')">AP</button>
+                <button class="preset-btn" onclick="usePreset('192.168.100.101')">STA</button>
+                <button class="preset-btn" onclick="usePreset('192.168.1.100')">LAN</button>
+            </div>
+
+            <div class="board-selector">
+                <label for="boardSelect">📟 Board:</label>
+                <select id="boardSelect" onchange="onBoardChange()">
+                    <option value="esp32c3">ESP32-C3 Mini</option>
+                    <option value="wemos_d1">Wemos D1 Mini (ESP8266)</option>
+                </select>
+            </div>
+
+            <div class="auto-discover">
+                <button class="btn-scan" onclick="autoDiscover()">🔍 Cari ESP32 di Jaringan</button>
+                <div class="scan-result" id="scanResult"></div>
+            </div>
+
+            <div class="settings-form">
+                <div class="settings-section-title">Pemetaan Nama Pin &amp; GPIO</div>
+                <div id="settingsFormList"></div>
+            </div>
+
+            <div class="settings-row" style="margin-top:10px;border-top:1px solid var(--border-color);padding-top:12px;display:flex;justify-content:space-between;">
+                <label style="font-size:0.7rem;font-weight:700;color:var(--text-secondary);">Asisten Suara (TTS):</label>
+                <input type="checkbox" id="ttsToggle" style="width:20px;height:20px;cursor:pointer;accent-color:var(--accent-purple);" checked />
+            </div>
+
+            <div class="backup-wrap">
+                <div class="settings-section-title">Pencadangan / Pemulihan (JSON)</div>
+                <textarea id="backupArea" placeholder="Tempel kode JSON di sini untuk memulihkan..."></textarea>
+                <div style="display:flex;gap:8px;">
+                    <button class="preset-btn" style="flex:1;padding:7px;" onclick="exportConfigJSON()">📤 Ekspor</button>
+                    <button class="preset-btn" style="flex:1;padding:7px;" onclick="importConfigJSON()">📥 Impor</button>
+                </div>
+            </div>
+
+            <div style="display:flex;gap:10px;margin-top:16px;">
+                <button class="btn-connect" style="flex:1;background:var(--bg-card);border:1px solid var(--border-color);color:var(--text-primary);" onclick="closeOverlay()">Tutup</button>
+                <button class="btn-connect" style="flex:1;" onclick="applyConfiguration()">Simpan &amp; Terapkan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+    MAIN APP
+    ============================================================ -->
+    <div id="mainApp" class="app-container" style="display:none;">
+
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="app-brand">
+                <div class="brand-icon">
+                    <svg viewBox="0 0 24 24"><path d="M16.5 9.5V6c0-2.49-2.01-4.5-4.5-4.5S7.5 3.51 7.5 6v3.5C5.57 9.5 4 11.07 4 13v5c0 1.93 1.57 3.5 3.5 3.5h9c1.93 0 3.5-1.57 3.5-3.5v-5c0-1.93-1.57-3.5-3.5-3.5zM9.5 6c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v3.5h-5V6zm8.5 12c0 .83-.67 1.5-1.5 1.5h-9c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5h9c.83 0 1.5.67 1.5 1.5v5z"/></svg>
+                </div>
+                <div class="brand-text">
+                    <h1 id="boardTitle">ESP32-C3 Pro</h1>
+                    <span class="brand-sub" id="boardSub">Smart Control Panel</span>
+                </div>
+            </div>
+            <div class="app-actions">
+                <button class="btn-icon" onclick="toggleTheme()" title="Ganti Tema" id="themeBtn">
+                    <svg viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9z"/></svg>
+                </button>
+                <button class="btn-icon" onclick="openOverlay()" title="Pengaturan">
+                    <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- STATUS BAR -->
+        <div class="status-bar">
+            <div class="status-item">
+                <span class="status-dot" id="wsStatus"></span>
+                <span class="label">WS</span>
+            </div>
+            <span class="status-divider"></span>
+            <div class="status-item">
+                <span class="label">IP</span>
+                <span class="status-ip" id="ipDisplay" onclick="openOverlay()">-</span>
+            </div>
+            <span class="status-divider"></span>
+            <div class="status-item">
+                <span class="label">WiFi</span>
+                <span class="status-badge" id="wifiStatus">-</span>
+            </div>
+            <span class="status-divider"></span>
+            <div class="status-item">
+                <span class="status-badge" id="latencyDisplay" style="font-family:monospace;">- ms</span>
+            </div>
+        </div>
+
+        <!-- VOICE BAR -->
+        <div class="voice-bar" id="voiceBar">
+            <div class="voice-info">
+                <div class="voice-icon" id="voiceIcon">
+                    <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
+                </div>
+                <div>
+                    <div class="voice-label">🎤 Kontrol Suara</div>
+                    <div class="voice-status-text" id="voiceStatus">Ucapkan perintah atau nama sakelar...</div>
+                </div>
+            </div>
+            <button class="btn-voice" id="micBtn">
+                <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
+                Mulai
+            </button>
+        </div>
+
+        <!-- INDICATOR LED -->
+        <div class="indicator-row">
+            <div class="indicator-led" id="indicatorLed"></div>
+            <span class="indicator-label">Indikator Koneksi Fisik</span>
+            <span class="indicator-status" id="indicatorStatus">● GPIO 2</span>
+        </div>
+
+        <!-- PRESET SCENE -->
+        <div class="section-title">
+            <span class="title-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg></span>
+            Preset Scene
+            <span class="title-line"></span>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:16px;">
+            <button class="btn-action on" style="flex:1;justify-content:center;font-size:0.8rem;padding:12px;" onclick="triggerScene('home')">
+                🏠 Mode Rumah
+            </button>
+            <button class="btn-action off" style="flex:1;justify-content:center;font-size:0.8rem;padding:12px;" onclick="triggerScene('away')">
+                🚶 Mode Pergi
+            </button>
+        </div>
+
+        <!-- TOGGLE SWITCHES -->
+        <div class="section-title">
+            <span class="title-icon"><svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg></span>
+            Toggle Switch
+            <span class="title-line"></span>
+        </div>
+
+        <div class="action-row">
+            <button class="btn-action on" onclick="allOn()">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                Semua ON
+            </button>
+            <button class="btn-action off" onclick="allOff()">
+                <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+                Semua OFF
+            </button>
+        </div>
+
+        <div class="pin-grid" id="pinGrid"></div>
+
+        <!-- MOMENTARY SWITCHES -->
+        <div class="section-title">
+            <span class="title-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg></span>
+            Momentary Switch
+            <span class="title-line"></span>
+        </div>
+        <div class="pin-grid" id="momentaryGrid"></div>
+
+        <!-- ALARM SYSTEM -->
+        <div class="section-title">
+            <span class="title-icon"><svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg></span>
+            Sistem Keamanan &amp; Alarm
+            <span class="title-line"></span>
+        </div>
+
+        <div class="alarm-card" id="alarmCard">
+            <div class="alarm-header">
+                <div class="alarm-icon-wrap" id="alarmIconWrap">
+                    <svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+                </div>
+                <div class="alarm-info">
+                    <div class="alarm-title">Status Proteksi</div>
+                    <div class="alarm-status-text off" id="alarmStatusText">● Aman &amp; Kondusif</div>
+                </div>
+                <div class="alarm-actions">
+                    <button class="btn-danger" id="btnMute" onclick="muteAlarm()" disabled>
+                        <svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63z"/></svg>
+                        Matikan Alarm
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- UTILITY BUTTONS -->
+        <div class="sync-row">
+            <button class="btn-sync" onclick="forceSync()">
+                <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+                Sinkronkan
+            </button>
+            <button class="btn-sync" onclick="clearLogs()">
+                <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+                Hapus Log
+            </button>
+            <button class="btn-sync" onclick="exportLogToCSV()">📥 Ekspor CSV</button>
+        </div>
+
+        <!-- LOG TERMINAL -->
+        <div class="log-container">
+            <div class="log-header">
+                <span class="log-title">📋 Konsol Aktivitas</span>
+                <span style="font-size:0.6rem;color:var(--text-muted);" id="logCount">0</span>
+            </div>
+            <div class="log-box" id="logBox">
+                <div class="log-entry"><span class="log-time">[Sistem]</span><span class="log-msg info">Panel kendali memuat komponen...</span></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="text/javascript" src="cordova.js"></script>
+    <script>
+        // ============================================================
+        //  ESP32-C3 / D1 MINI CONTROLLER — CORE ENGINE
+        // ============================================================
+
+        var espIP = '';
+        try { espIP = localStorage.getItem('espIP') || ''; } catch (_) { espIP = ''; }
+
+        var ws = null;
+        var reconnectTimer = null;
+        var pingTimer = null;
+        var pingInterval = 4000;
+        var pingSentTime = 0;
+        var reconnectAttempts = 0;
+        var maxReconnectAttempts = 10;
+
+        var pins = [];
+        var activityLog = [];
+        var logCount = 0;
+
+        var alarmActive = false;
+        var audioCtx = null;
+        var cordovaReady = false;
+        var ttsEnabled = true;
+        var currentBoard = 'esp32c3'; // 'esp32c3' or 'wemos_d1'
+
+        var DEFAULT_PINS_ESP32C3 = [
+            { id: 'SW1', label: 'Switch 1', gpio: 4, state: false, mode: 'toggle', timerLimit: 0 },
+            { id: 'SW2', label: 'Switch 2', gpio: 5, state: false, mode: 'toggle', timerLimit: 0 },
+            { id: 'SW3', label: 'Switch 3', gpio: 6, state: false, mode: 'toggle', timerLimit: 0 },
+            { id: 'MOM1', label: 'Momentary 1', gpio: 10, state: false, mode: 'momentary' }
+        ];
+
+        var DEFAULT_PINS_WEMOS = [
+            { id: 'SW1', label: 'Switch 1', gpio: 0, state: false, mode: 'toggle', timerLimit: 0 },
+            { id: 'SW2', label: 'Switch 2', gpio: 2, state: false, mode: 'toggle', timerLimit: 0 },
+            { id: 'SW3', label: 'Switch 3', gpio: 4, state: false, mode: 'toggle', timerLimit: 0 },
+            { id: 'MOM1', label: 'Momentary 1', gpio: 5, state: false, mode: 'momentary' }
+        ];
+
+        var toggleDebounce = {};
+        var autoOffTimers = {};
+
+        var alarmLoopTimer = null;
+        var alarmOsc = null;
+        var alarmGain = null;
+
+        var $ = function(id) { return document.getElementById(id); };
+
+        // ============================================================
+        //  THEME
+        // ============================================================
+        function toggleTheme() {
+            var html = document.documentElement;
+            var current = html.getAttribute('data-theme');
+            var next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            try { localStorage.setItem('theme', next); } catch (_) {}
+            updateThemeIcon(next);
+            log('Tema: ' + next.toUpperCase(), 'info');
+        }
+
+        function updateThemeIcon(theme) {
+            var btn = $('themeBtn');
+            if (!btn) return;
+            if (theme === 'dark') {
+                btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9z"/></svg>';
+            } else {
+                btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/><path d="M12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>';
+            }
+        }
+
+        function loadTheme() {
+            try {
+                var saved = localStorage.getItem('theme') || 'dark';
+                document.documentElement.setAttribute('data-theme', saved);
+                updateThemeIcon(saved);
+            } catch (_) {}
+        }
+
+        // ============================================================
+        //  CORDOVA
+        // ============================================================
+        document.addEventListener('deviceready', function() {
+            log('[Sistem] Cordova siap', 'info');
+            cordovaReady = true;
+            if (window.cordova && cordova.platformId === 'android') {
+                requestAndroidPermissions();
+            }
+            document.addEventListener('backbutton', function(e) {
+                e.preventDefault();
+                if (navigator.app) navigator.app.exitApp();
+            }, false);
+            loadTheme();
+            initApp();
+        }, false);
+
+        if (!window.cordova) {
+            document.addEventListener('DOMContentLoaded', function() {
+                loadTheme();
+                initApp();
+            });
+        }
+
+        function requestAndroidPermissions() {
+            var perms = cordova.plugins.permissions;
+            if (!perms) return;
+            var list = [perms.RECORD_AUDIO, perms.VIBRATE, perms.WAKE_LOCK];
+            list.forEach(function(p) {
+                perms.checkPermission(p, function(status) {
+                    if (!status.hasPermission) perms.requestPermission(p, null, null);
+                }, null);
+            });
+        }
+
+        // ============================================================
+        //  BOARD PRESETS
+        // ============================================================
+        function getBoardPins(board) {
+            if (board === 'wemos_d1') {
+                return JSON.parse(JSON.stringify(DEFAULT_PINS_WEMOS));
+            } else {
+                return JSON.parse(JSON.stringify(DEFAULT_PINS_ESP32C3));
+            }
+        }
+
+        function onBoardChange() {
+            var sel = $('boardSelect');
+            currentBoard = sel.value;
+            // Reset pins ke default board
+            pins = getBoardPins(currentBoard);
+            renderSettingsForm();
+            // Simpan pilihan board
+            try { localStorage.setItem('board', currentBoard); } catch (_) {}
+            log('Board diganti: ' + (currentBoard === 'esp32c3' ? 'ESP32-C3 Mini' : 'Wemos D1 Mini'), 'info');
+            // Update header
+            updateBoardHeader();
+        }
+
+        function updateBoardHeader() {
+            var title = $('boardTitle');
+            var sub = $('boardSub');
+            if (currentBoard === 'esp32c3') {
+                title.textContent = 'ESP32-C3 Mini';
+                sub.textContent = 'RISC-V Smart Control';
+            } else {
+                title.textContent = 'Wemos D1 Mini';
+                sub.textContent = 'ESP8266 Smart Control';
+            }
+        }
+
+        // ============================================================
+        //  INIT
+        // ============================================================
+        function initApp() {
+            // Load board preference
+            try {
+                var savedBoard = localStorage.getItem('board') || 'esp32c3';
+                currentBoard = savedBoard;
+                $('boardSelect').value = savedBoard;
+            } catch (_) { currentBoard = 'esp32c3'; }
+
+            try {
+                var savedPins = localStorage.getItem('pinsConfig');
+                if (savedPins) {
+                    pins = JSON.parse(savedPins);
+                } else {
+                    pins = getBoardPins(currentBoard);
+                }
+            } catch (_) {
+                pins = getBoardPins(currentBoard);
+            }
+
+            try {
+                var ttsState = localStorage.getItem('ttsEnabled');
+                ttsEnabled = (ttsState !== 'false');
+            } catch (_) { ttsEnabled = true; }
+            $('ttsToggle').checked = ttsEnabled;
+
+            updateBoardHeader();
+
+            if (!espIP) {
+                openOverlay();
+            } else {
+                $('connectOverlay').classList.add('hidden');
+                $('mainApp').style.display = 'block';
+                $('ipDisplay').textContent = espIP;
+                $('ipInput').value = espIP;
+                renderPins();
+                connectWebSocket();
+            }
+        }
+
+        function openOverlay() {
+            $('connectOverlay').classList.remove('hidden');
+            $('mainApp').style.display = 'none';
+            renderSettingsForm();
+        }
+
+        function closeOverlay() {
+            if (!espIP) { alert('Masukkan alamat IP terlebih dahulu!'); return; }
+            $('connectOverlay').classList.add('hidden');
+            $('mainApp').style.display = 'block';
+        }
+
+        function saveAndConnect() {
+            var input = $('ipInput').value.trim();
+            if (!input) { alert('Harap isi alamat IP!'); return; }
+            espIP = input;
+            try { localStorage.setItem('espIP', espIP); } catch (_) {}
+            $('ipDisplay').textContent = espIP;
+            closeOverlay();
+            renderPins();
+            connectWebSocket();
+        }
+
+        // ============================================================
+        //  PRESETS & DISCOVER
+        // ============================================================
+        function usePreset(ip) {
+            $('ipInput').value = ip;
+            var btns = $('presetRow').querySelectorAll('.preset-btn');
+            btns.forEach(function(b) { b.classList.remove('active'); });
+            if (event && event.target) event.target.classList.add('active');
+        }
+
+        function autoDiscover() {
+            var result = $('scanResult');
+            result.textContent = '🔎 Menelusuri jaringan...';
+            var pool = ['192.168.4.1', '192.168.100.101', '192.168.1.100', '192.168.0.100'];
+            var index = 0,
+                found = false;
+
+            pool.forEach(function(ip) {
+                if (found) return;
+                var test = new WebSocket('ws://' + ip + ':81/');
+                var timer = setTimeout(function() {
+                    test.close();
+                    index++;
+                    if (index >= pool.length && !found) result.textContent = '⚠️ ESP32 tidak ditemukan.';
+                }, 1400);
+
+                test.onopen = function() {
+                    found = true;
+                    clearTimeout(timer);
+                    test.close();
+                    result.textContent = '✅ Terdeteksi: ' + ip;
+                    $('ipInput').value = ip;
+                };
+            });
+        }
+
+        // ============================================================
+        //  SETTINGS & JSON
+        // ============================================================
+        function renderSettingsForm() {
+            var container = $('settingsFormList');
+            container.innerHTML = pins.map(function(p) {
+                return '<div class="settings-row" data-id="' + p.id + '">' +
+                    '<label>' + p.id + ' Label:</label>' +
+                    '<input type="text" class="pin-label-input" value="' + p.label + '">' +
+                    '<label style="flex:0;margin-left:6px;">GPIO:</label>' +
+                    '<input type="number" class="pin-gpio-input" value="' + p.gpio + '">' +
+                    '</div>';
+            }).join('');
+        }
+
+        function applyConfiguration() {
+            var rows = document.querySelectorAll('.settings-row');
+            rows.forEach(function(row) {
+                var id = row.getAttribute('data-id');
+                var label = row.querySelector('.pin-label-input').value.trim();
+                var gpio = parseInt(row.querySelector('.pin-gpio-input').value);
+
+                var p = pins.find(function(x) { return x.id === id; });
+                if (p) {
+                    if (label) p.label = label;
+                    if (!isNaN(gpio)) p.gpio = gpio;
+                }
+            });
+
+            ttsEnabled = $('ttsToggle').checked;
+            try {
+                localStorage.setItem('ttsEnabled', ttsEnabled);
+                localStorage.setItem('pinsConfig', JSON.stringify(pins));
+                localStorage.setItem('board', currentBoard);
+            } catch (_) {}
+
+            log('Konfigurasi disimpan', 'info');
+            saveAndConnect();
+        }
+
+        function exportConfigJSON() {
+            try {
+                var dataStr = JSON.stringify({ board: currentBoard, pins: pins, ttsEnabled: ttsEnabled, espIP: espIP },
+                null, 2);
+                $('backupArea').value = dataStr;
+                log('JSON diekspor', 'info');
+            } catch (_) { alert('Gagal ekspor.'); }
+        }
+
+        function importConfigJSON() {
+            var raw = $('backupArea').value.trim();
+            if (!raw) { alert('Area teks kosong!'); return; }
+            try {
+                var parsed = JSON.parse(raw);
+                if (parsed.board) {
+                    currentBoard = parsed.board;
+                    $('boardSelect').value = currentBoard;
+                    updateBoardHeader();
+                }
+                if (parsed.pins) pins = parsed.pins;
+                if (parsed.ttsEnabled !== undefined) ttsEnabled = parsed.ttsEnabled;
+                if (parsed.espIP) espIP = parsed.espIP;
+
+                localStorage.setItem('pinsConfig', JSON.stringify(pins));
+                localStorage.setItem('ttsEnabled', ttsEnabled);
+                localStorage.setItem('espIP', espIP);
+                localStorage.setItem('board', currentBoard);
+
+                renderSettingsForm();
+                $('ttsToggle').checked = ttsEnabled;
+                $('ipInput').value = espIP;
+                log('JSON diimpor', 'on');
+                speakAlert('Konfigurasi diimpor');
+            } catch (e) {
+                alert('Struktur JSON salah: ' + e.message);
+            }
+        }
+
+        // ============================================================
+        //  WEBSOCKET
+        // ============================================================
+        function connectWebSocket() {
+            if (ws) { try { ws.close(); } catch (_) {} ws = null; }
+            var url = 'ws://' + espIP + ':81/';
+            $('wsStatus').className = 'status-dot connecting';
+            log('Menghubungi WS: ' + url, 'info');
+
+            try {
+                ws = new WebSocket(url);
+            } catch (e) {
+                log('Gagal inisiasi WS', 'error');
+                reconnect();
+                return;
+            }
+
+            ws.onopen = function() {
+                reconnectAttempts = 0;
+                $('wsStatus').className = 'status-dot online';
+                log('WS terhubung!', 'on');
+                ws.send(JSON.stringify({ cmd: 'getPins' }));
+                startPing();
+            };
+
+            ws.onclose = function() {
+                $('wsStatus').className = 'status-dot offline';
+                $('latencyDisplay').textContent = '- ms';
+                log('WS terputus, menyambung ulang...', 'warn');
+                stopPing();
+                reconnect();
+            };
+
+            ws.onerror = function() {
+                log('Kesalahan WS', 'error');
+            };
+
+            ws.onmessage = function(ev) {
+                var data;
+                try { data = JSON.parse(ev.data); } catch (_) { return; }
+
+                if (data.type === 'pong') {
+                    var rtt = Date.now() - data.ts;
+                    var badge = $('latencyDisplay');
+                    badge.textContent = rtt + ' ms';
+                    badge.style.color = rtt < 80 ? 'var(--accent-green)' : rtt < 200 ? 'var(--accent-orange)' :
+                        'var(--accent-red)';
+                } else if (data.type === 'pins') {
+                    var remote = data.pins || [];
+                    remote.forEach(function(rp) {
+                        var local = pins.find(function(x) { return x.id === rp.id; });
+                        if (local) {
+                            if (local.state !== rp.state) {
+                                local.state = rp.state;
+                                updatePinUI(local.id, rp.state);
+                            }
+                        }
+                    });
+                    $('wifiStatus').textContent = data.wifi || 'Hybrid';
+                    if (data.alarm !== undefined) updateAlarmUI(data.alarm);
+                    if (data.indicator !== undefined) updateIndicatorUI(data.indicator);
+                } else if (data.type === 'update') {
+                    var p = pins.find(function(x) { return x.id === data.pin; });
+                    if (p) {
+                        if (p.state !== data.state) {
+                            p.state = data.state;
+                            updatePinUI(p.id, data.state);
+                            log(p.label + ' -> ' + (data.state ? 'NYALA' : 'MATI'), data.state ? 'on' : 'off');
+                        }
+                    }
+                } else if (data.type === 'alarm') {
+                    updateAlarmUI(data.state);
+                    log(data.state ? 'ALARM AKTIF!' : 'Alarm diredam', data.state ? 'error' : 'on');
+                } else if (data.type === 'indicator') {
+                    updateIndicatorUI(data.state);
+                }
+            };
+        }
+
+        function reconnect() {
+            reconnectAttempts++;
+            var delay = Math.min(1500 * Math.pow(1.5, reconnectAttempts), 12000);
+            clearTimeout(reconnectTimer);
+            reconnectTimer = setTimeout(connectWebSocket, delay);
+        }
+
+        function startPing() {
+            if (pingTimer) clearInterval(pingTimer);
+            pingTimer = setInterval(function() {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ cmd: 'ping', ts: Date.now() }));
+                }
+            }, pingInterval);
+        }
+
+        function stopPing() {
+            if (pingTimer) { clearInterval(pingTimer);
+                pingTimer = null; }
+        }
+
+        // ============================================================
+        //  VOICE (TTS + RECOGNITION)
+        // ============================================================
+        function speakAlert(text) {
+            if (!ttsEnabled) return;
+            try {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    var ut = new SpeechSynthesisUtterance(text);
+                    ut.lang = 'id-ID';
+                    window.speechSynthesis.speak(ut);
+                }
+            } catch (_) {}
+        }
+
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            var recognition = new SpeechRecognition();
+            recognition.lang = 'id-ID';
+            recognition.continuous = false;
+
+            var mic = $('micBtn');
+            var vs = $('voiceStatus');
+            var vicon = $('voiceIcon');
+
+            mic.addEventListener('click', function() {
+                try {
+                    recognition.start();
+                    vs.textContent = 'Mendengarkan...';
+                    mic.classList.add('listening');
+                    vicon.classList.add('active');
+                } catch (e) { log('Mik: ' + e.message, 'error'); }
+            });
+
+            recognition.onresult = function(event) {
+                var text = event.results[0][0].transcript.toLowerCase();
+                log('🎤 "' + text + '"', 'info');
+                vs.textContent = 'Didengar: "' + text + '"';
+                parseVoiceCommand(text);
+            };
+
+            recognition.onspeechend = function() {
+                recognition.stop();
+                mic.classList.remove('listening');
+                vicon.classList.remove('active');
+            };
+
+            recognition.onerror = function() {
+                vs.textContent = 'Gagal memproses suara';
+                mic.classList.remove('listening');
+                vicon.classList.remove('active');
+            };
+        } else {
+            $('voiceBar').style.display = 'none';
+        }
+
+        function parseVoiceCommand(cmd) {
+            var t = cmd.trim().toLowerCase();
+            t = t.replace(/\bsatu\b/g, '1').replace(/\bdua\b/g, '2').replace(/\btiga\b/g, '3');
+
+            var onWords = ['nyalakan', 'hidupkan', 'on', 'nyala', 'aktifkan'];
+            var offWords = ['matikan', 'padamkan', 'off', 'mati', 'nonaktifkan'];
+
+            if (t.includes('matikan alarm') || t.includes('alarm off') || t.includes('stop alarm') || t.includes(
+                'senyap')) {
+                muteAlarm();
+                return;
+            }
+
+            var handled = false;
+            pins.forEach(function(p) {
+                var name = p.label.toLowerCase();
+                if (t.includes(name) || t.includes(p.id.toLowerCase())) {
+                    if (p.mode === 'toggle') {
+                        var wantOn = onWords.some(function(w) { return t.includes(w); });
+                        var wantOff = offWords.some(function(w) { return t.includes(w); });
+
+                        if (wantOn && !p.state) { togglePin(p.id);
+                            handled = true; } else if (wantOff && p.state) { togglePin(p.id);
+                            handled = true; } else if (!wantOn && !wantOff) { togglePin(p.id);
+                            handled = true; }
+                    } else if (p.mode === 'momentary') {
+                        momentaryOn(p.id);
+                        setTimeout(function() { momentaryOff(p.id); }, 1500);
+                        handled = true;
+                    }
+                }
+            });
+
+            if (!handled) vs.textContent = 'Perintah tidak dikenali.';
+        }
+
+        // ============================================================
+        //  PRESET SCENE
+        // ============================================================
+        function triggerScene(mode) {
+            if (mode === 'home') {
+                log('Mode Rumah diaktifkan', 'info');
+                speakAlert('Mode rumah aktif');
+                pins.forEach(function(p) {
+                    if (p.mode === 'toggle') {
+                        var target = (p.id === 'SW1' || p.id === 'SW2');
+                        if (p.state !== target) {
+                            p.state = target;
+                            updatePinUI(p.id, target);
+                            if (ws && ws.readyState === WebSocket.OPEN) {
+                                ws.send(JSON.stringify({ cmd: 'toggle', pin: p.id }));
+                            }
+                        }
+                    }
+                });
+            } else if (mode === 'away') {
+                log('Mode Pergi diaktifkan', 'info');
+                speakAlert('Mode pergi aktif');
+                pins.forEach(function(p) {
+                    if (p.mode === 'toggle' && p.state === true) {
+                        p.state = false;
+                        updatePinUI(p.id, false);
+                        if (ws && ws.readyState === WebSocket.OPEN) {
+                            ws.send(JSON.stringify({ cmd: 'toggle', pin: p.id }));
+                        }
+                    }
+                });
+            }
+        }
+
+        // ============================================================
+        //  RENDER PINS
+        // ============================================================
+        function renderPins() {
+            var toggles = pins.filter(function(x) { return x.mode === 'toggle'; });
+            $('pinGrid').innerHTML = toggles.map(function(p) {
+                return '<div class="pin-card" id="card-' + p.id + '">' +
+                    '<div class="pin-icon"><svg viewBox="0 0 24 24"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg></div>' +
+                    '<div class="pin-name">' + p.label + '</div>' +
+                    '<div class="pin-gpio">GPIO ' + p.gpio + '</div>' +
+                    '<button class="toggle-switch" id="btn-' + p.id + '"></button>' +
+                    '<select class="pin-timer" id="timer-' + p.id + '">' +
+                    '<option value="0">Tanpa Timer</option>' +
+                    '<option value="5">5 Detik</option>' +
+                    '<option value="10">10 Detik</option>' +
+                    '<option value="30">30 Detik</option>' +
+                    '<option value="60">1 Menit</option>' +
+                    '<option value="300">5 Menit</option>' +
+                    '</select>' +
+                    '</div>';
+            }).join('');
+
+            var moments = pins.filter(function(x) { return x.mode === 'momentary'; });
+            $('momentaryGrid').innerHTML = moments.map(function(p) {
+                return '<div class="pin-card" id="card-' + p.id + '">' +
+                    '<div class="pin-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg></div>' +
+                    '<div class="pin-name">' + p.label + '</div>' +
+                    '<div class="pin-gpio">GPIO ' + p.gpio + '</div>' +
+                    '<button class="momentary-btn" id="btn-' + p.id + '">TEKAN</button>' +
+                    '</div>';
+            }).join('');
+
+            toggles.forEach(function(p) {
+                var btn = $('btn-' + p.id);
+                if (btn) btn.addEventListener('click', function() { togglePin(p.id); });
+                var sel = $('timer-' + p.id);
+                if (sel) sel.addEventListener('change', function() { p.timerLimit = parseInt(this.value); });
+                updatePinUI(p.id, p.state);
+            });
+
+            moments.forEach(function(p) {
+                var btn = $('btn-' + p.id);
+                if (!btn) return;
+                var active = false;
+
+                var start = function(e) { e.preventDefault(); if (active) return;
+                    active = true;
+                    momentaryOn(p.id); };
+                var end = function(e) { e.preventDefault(); if (!active) return;
+                    active = false;
+                    momentaryOff(p.id); };
+
+                btn.addEventListener('mousedown', start);
+                btn.addEventListener('mouseup', end);
+                btn.addEventListener('mouseleave', end);
+                btn.addEventListener('touchstart', start, { passive: false });
+                btn.addEventListener('touchend', end, { passive: false });
+            });
+        }
+
+        function updatePinUI(id, state) {
+            var card = $('card-' + id);
+            var btn = $('btn-' + id);
+            var p = pins.find(function(x) { return x.id === id; });
+            if (!p || !card || !btn) return;
+
+            if (p.mode === 'toggle') {
+                card.classList.toggle('on', state);
+                btn.classList.toggle('on', state);
+                if (state && p.timerLimit > 0) {
+                    startLocalTimer(id, p.timerLimit);
+                } else if (!state) {
+                    clearLocalTimer(id);
+                }
+            } else {
+                card.classList.toggle('on', state);
+                btn.classList.toggle('active', state);
+                btn.textContent = state ? 'HOLD' : 'TEKAN';
+            }
+        }
+
+        // ============================================================
+        //  TIMER
+        // ============================================================
+        function startLocalTimer(id, sec) {
+            clearLocalTimer(id);
+            var card = $('card-' + id);
+            var overlay = document.createElement('div');
+            overlay.className = 'countdown-indicator';
+            overlay.id = 'cnt-' + id;
+            card.appendChild(overlay);
+
+            var remaining = sec;
+            overlay.textContent = formatSec(remaining);
+
+            autoOffTimers[id] = setInterval(function() {
+                remaining--;
+                if (remaining <= 0) {
+                    log('Timer habis, matikan ' + id, 'off');
+                    clearLocalTimer(id);
+                    var p = pins.find(function(x) { return x.id === id; });
+                    if (p && p.state) togglePin(id);
+                } else {
+                    overlay.textContent = formatSec(remaining);
+                }
+            }, 1000);
+        }
+
+        function clearLocalTimer(id) {
+            if (autoOffTimers[id]) { clearInterval(autoOffTimers[id]);
+                delete autoOffTimers[id]; }
+            var overlay = $('cnt-' + id);
+            if (overlay) overlay.remove();
+            var select = $('timer-' + id);
+            if (select) select.value = "0";
+        }
+
+        function formatSec(s) {
+            var min = Math.floor(s / 60);
+            var sec = s % 60;
+            return (min < 10 ? '0' : '') + min + ':' + (sec < 10 ? '0' : '') + sec;
+        }
+
+        // ============================================================
+        //  ACTIONS
+        // ============================================================
+        function togglePin(id) {
+            if (toggleDebounce[id]) return;
+            toggleDebounce[id] = true;
+            setTimeout(function() { toggleDebounce[id] = false; }, 200);
+
+            var p = pins.find(function(x) { return x.id === id; });
+            if (!p || p.mode !== 'toggle') return;
+
+            var next = !p.state;
+            p.state = next;
+            updatePinUI(id, next);
+
+            log(p.label + ' -> ' + (next ? 'ON' : 'OFF'), next ? 'on' : 'off');
+            speakAlert(p.label + (next ? ' dinyalakan' : ' dimatikan'));
+
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                setTimeout(function() {
+                    p.state = !next;
+                    updatePinUI(id, p.state);
+                }, 1000);
+                return;
+            }
+            ws.send(JSON.stringify({ cmd: 'toggle', pin: id }));
+        }
+
+        function momentaryOn(id) {
+            var p = pins.find(function(x) { return x.id === id; });
+            if (!p || p.mode !== 'momentary') return;
+            p.state = true;
+            updatePinUI(id, true);
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+            ws.send(JSON.stringify({ cmd: 'momentary', pin: id, action: 'on' }));
+        }
+
+        function momentaryOff(id) {
+            var p = pins.find(function(x) { return x.id === id; });
+            if (!p || p.mode !== 'momentary') return;
+            p.state = false;
+            updatePinUI(id, false);
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+            ws.send(JSON.stringify({ cmd: 'momentary', pin: id, action: 'off' }));
+        }
+
+        function allOn() {
+            pins.forEach(function(p) { if (p.mode === 'toggle' && !p.state) togglePin(p.id); });
+        }
+
+        function allOff() {
+            pins.forEach(function(p) { if (p.mode === 'toggle' && p.state) togglePin(p.id); });
+        }
+
+        // ============================================================
+        //  ALARM
+        // ============================================================
+        function updateAlarmUI(state) {
+            var was = alarmActive;
+            alarmActive = state;
+            if (state && !was) startAlarmLoop();
+            if (!state && was) { stopAlarmLoop();
+                clearAlarmNotification(); }
+
+            var card = $('alarmCard');
+            var status = $('alarmStatusText');
+            var btn = $('btnMute');
+
+            card.classList.toggle('active', state);
+            if (state) {
+                status.className = 'alarm-status-text on';
+                status.textContent = '● BAHAYA - PERGERAKAN TERDETEKSI!';
+                btn.disabled = false;
+            } else {
+                status.className = 'alarm-status-text off';
+                status.textContent = '● Aman & Kondusif';
+                btn.disabled = true;
+            }
+        }
+
+        function updateIndicatorUI(state) {
+            $('indicatorLed').classList.toggle('on', state);
+        }
+
+        function muteAlarm() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+            ws.send(JSON.stringify({ cmd: 'muteAlarm' }));
+            updateAlarmUI(false);
+            log('Alarm dimatikan manual', 'off');
+        }
+
+        function initAudio() {
+            if (!audioCtx) {
+                try { audioCtx = new(window.AudioContext || window.webkitAudioContext)(); } catch (_) {}
+            }
+        }
+
+        function startAlarmLoop() {
+            if (alarmLoopTimer) return;
+            log('🔔 SIRINE AKTIF', 'warn');
+            speakAlert('Peringatan! Sensor keamanan mendeteksi gerakan!');
+
+            try {
+                initAudio();
+                if (audioCtx) {
+                    alarmOsc = audioCtx.createOscillator();
+                    alarmGain = audioCtx.createGain();
+                    alarmOsc.type = 'sawtooth';
+                    alarmOsc.frequency.value = 850;
+                    alarmGain.gain.value = 0.12;
+                    alarmOsc.connect(alarmGain);
+                    alarmGain.connect(audioCtx.destination);
+                    alarmOsc.start();
+
+                    var high = true;
+                    alarmLoopTimer = setInterval(function() {
+                        if (!alarmOsc) return;
+                        var target = high ? 1300 : 650;
+                        alarmOsc.frequency.linearRampToValueAtTime(target, audioCtx.currentTime + 0.3);
+                        high = !high;
+                    }, 400);
+                }
+            } catch (_) {}
+
+            var vibe = setInterval(function() {
+                if (!alarmActive) { clearInterval(vibe); return; }
+                if ('vibrate' in navigator) {
+                    try { navigator.vibrate([400, 200, 400, 200]); } catch (_) {}
+                }
+            }, 1500);
+
+            showAlarmNotification();
+            window._vibe = vibe;
+        }
+
+        function stopAlarmLoop() {
+            if (alarmLoopTimer) { clearInterval(alarmLoopTimer);
+                alarmLoopTimer = null; }
+            if (window._vibe) { clearInterval(window._vibe);
+                window._vibe = null; }
+            if (alarmOsc) { try { alarmOsc.stop(); } catch (_) {} alarmOsc = null; }
+            alarmGain = null;
+            if ('vibrate' in navigator) { try { navigator.vibrate(0); } catch (_) {} }
+        }
+
+        function showAlarmNotification() {
+            if (window.cordova && cordova.plugins && cordova.plugins.notification && cordova.plugins.notification
+                .local) {
+                cordova.plugins.notification.local.schedule({
+                    id: 888,
+                    title: 'PERINGATAN ALARM!',
+                    text: 'Anomali terdeteksi di area jangkauan sensor!',
+                    foreground: true,
+                    wakeUpScreen: true,
+                    vibrate: true,
+                    sound: 'res://platform_default',
+                    androidOngoing: true,
+                    androidChannelId: 'esp-alarm-channel',
+                    androidChannelName: 'ESP-C3 Alarm System',
+                    androidChannelImportance: 'high'
+                });
+            }
+        }
+
+        function clearAlarmNotification() {
+            if (window.cordova && cordova.plugins && cordova.plugins.notification && cordova.plugins.notification
+                .local) {
+                cordova.plugins.notification.local.cancel(888);
+            }
+        }
+
+        // ============================================================
+        //  UTILITY
+        // ============================================================
+        function forceSync() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ cmd: 'getPins' }));
+                log('Sinkronisasi status...', 'info');
+            }
+        }
+
+        function log(msg, type) {
+            var time = new Date().toLocaleTimeString('id-ID');
+            activityLog.push({ time: time, msg: msg });
+
+            var cls = 'info';
+            if (type === 'on') cls = 'on';
+            else if (type === 'off' || type === 'error') cls = 'off';
+            else if (type === 'warn') cls = 'warn';
+
+            var box = $('logBox');
+            var el = document.createElement('div');
+            el.className = 'log-entry';
+            el.innerHTML = '<span class="log-time">[' + time + ']</span><span class="log-msg ' + cls + '">' + msg +
+                '</span>';
+            box.appendChild(el);
+            box.scrollTop = box.scrollHeight;
+
+            while (box.children.length > 60) box.removeChild(box.firstChild);
+
+            logCount++;
+            $('logCount').textContent = logCount;
+        }
+
+        function clearLogs() {
+            $('logBox').innerHTML = '';
+            activityLog = [];
+            logCount = 0;
+            $('logCount').textContent = '0';
+            log('Log dibersihkan.', 'info');
+        }
+
+        function exportLogToCSV() {
+            if (activityLog.length === 0) { alert('Belum ada log!'); return; }
+            try {
+                var csv = 'data:text/csv;charset=utf-8,Waktu,Catatan Log\r\n';
+                activityLog.forEach(function(row) {
+                    var safeMsg = row.msg.replace(/"/g, '""');
+                    csv += '"' + row.time + '","' + safeMsg + '"\r\n';
+                });
+
+                var link = document.createElement('a');
+                link.setAttribute('href', encodeURI(csv));
+                link.setAttribute('download', 'esp32_activity_log.csv');
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                log('CSV diekspor', 'info');
+            } catch (_) { alert('Gagal ekspor CSV.'); }
+        }
+    </script>
+</body>
+</html>
