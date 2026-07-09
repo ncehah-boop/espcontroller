@@ -32,10 +32,10 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         with:
-          # API level 34 (Android 14) is stable and widely supported
+          # Menggunakan API 33 dan Build-tools 33.0.2 yang lebih stabil di CI
           packages: |
-            platforms;android-34
-            build-tools;34.0.0
+            platforms;android-33
+            build-tools;33.0.2
             platform-tools
 
       - name: Accept Android Licenses
@@ -46,20 +46,20 @@ jobs:
           cordova create espapp com.esp32.c3.pro "ESP32-C3 Controller Pro"
           cd espapp
           
-          # Copy config.xml and index.html from root
+          # Salin file konfigurasi dari root repo
           cp ../config.xml config.xml
           cp ../index.html www/index.html
           
-          # Add Android platform
+          # Tambahkan platform Android
           cordova platform add android@latest
           
-          # Add essential plugins
+          # Tambahkan plugin inti dan kompatibilitas
           cordova plugin add cordova-plugin-whitelist
           cordova plugin add cordova-plugin-device
           cordova plugin add cordova-plugin-androidx
           cordova plugin add cordova-plugin-androidx-adapter
           
-          # Plugins for core functionality
+          # Tambahkan plugin fungsional
           cordova plugin add cordova-plugin-background-mode
           cordova plugin add cordova-plugin-local-notification
           cordova plugin add cordova-plugin-vibration
