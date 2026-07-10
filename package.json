@@ -1,6 +1,27 @@
-"dependencies": {
-    "@globules-io/cordova-plugin-background-mode": "^1.0.0",
+{
+  "name": "com.example.esp32controller",
+  "displayName": "ESP32 Controller",
+  "version": "1.0.0",
+  "description": "ESP32 Controller App",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {},
+  "devDependencies": {
+      "@globules-io/cordova-plugin-background-mode": "^1.0.0",
     "@moodlehq/cordova-plugin-local-notification": "^0.9.0-moodle.12",
     "cordova-plugin-android-permissions": "^1.1.5",
-    "cordova-plugin-vibration": "^3.1.1"
+    "cordova-plugin-vibration": "^3.1.1",
+    "cordova-android": "^13.0.0"
+  },
+  "cordova": {
+    "plugins": {},
+    "platforms": []
   }
+}
+
+
+
+
+
