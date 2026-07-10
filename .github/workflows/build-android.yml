@@ -5,7 +5,7 @@ on:
     branches: [ "main", "master" ]
   pull_request:
     branches: [ "main", "master" ]
-  workflow_dispatch: # Memungkinkan build dijalankan secara manual dari tab Actions
+  workflow_dispatch:
 
 jobs:
   build:
@@ -16,7 +16,7 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      # 2. Setup Java JDK 17 (Kebutuhan wajib untuk cordova-android versi terbaru)
+      # 2. Setup Java JDK 17 (Wajib untuk Android SDK modern)
       - name: Set up Java JDK 17
         uses: actions/setup-java@v4
         with:
@@ -29,47 +29,59 @@ jobs:
         with:
           node-version: '20'
 
-      # 4. Memasang Cordova CLI secara global
+      # 4. PEMBERSIHAN MENDALAM (Cache, Sisa Android, Sisa Plugin, & Node Modules)
+      # Langkah ini menghapus sisa folder lama jika tidak sengaja ter-commit ke repositori
+      - name: Deep Clean Workspace & Cache
+        run: |
+          echo "Memulai pembersihan workspace secara menyeluruh..."
+          rm -rf platforms/
+          rm -rf plugins/
+          rm -rf node_modules/
+          rm -f package-lock.json
+          npm cache clean --force
+          echo "Pembersihan selesai."
+
+      # 5. Memasang Cordova CLI secara global
       - name: Install Cordova CLI
         run: |
           npm install -g cordova
 
-      # 5. Memasang dependensi proyek (jika ada package.json)
+      # 6. Memasang ulang dependensi proyek yang bersih
       - name: Install Dependencies
         run: |
           if [ -f package.json ]; then
             npm install
           fi
 
-      # 6. Menambahkan Plugin Cordova yang dibutuhkan oleh aplikasi Anda
+      # 7. Menambahkan Plugin Cordova (Menggunakan versi fork modern agar tidak crash)
       - name: Add Cordova Plugins
         run: |
-          cordova plugin add cordova-plugin-background-mode --force
+          cordova plugin add @globules-io/cordova-plugin-background-mode --force
+          cordova plugin add @moodlehq/cordova-plugin-local-notification --force
           cordova plugin add cordova-plugin-android-permissions --force
           cordova plugin add cordova-plugin-vibration --force
-          cordova plugin add cordova-plugin-local-notification --force
 
-      # 7. Menambahkan platform Android ke proyek Cordova
+      # 8. Menambahkan ulang platform Android yang baru
       - name: Add Android Platform
         run: |
           cordova platform add android
 
-      # 8. Membersihkan platform Android sebelum build
-      - name: Clean Android Platform
+      # 9. Membersihkan gradle dan sisa build Android internal
+      - name: Clean Android Platform Build
         run: |
           cordova clean android
 
-      # 9. Menyiapkan (prepare) platform Android
+      # 10. Menyiapkan (prepare) aset dan plugin ke platform Android
       - name: Prepare Android Platform
         run: |
           cordova prepare android
 
-      # 10. Memulai kompilasi APK versi Debug
+      # 11. Memulai proses kompilasi APK versi Debug
       - name: Build Debug APK
         run: |
           cordova build android --debug
 
-      # 11. Mengunggah file APK hasil kompilasi sebagai berkas Artifact GitHub
+      # 12. Mengunggah file APK hasil kompilasi sebagai berkas Artifact GitHub
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
