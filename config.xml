@@ -1,5 +1,10 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="com.example.esp32controller" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<!-- Tambahan xmlns:android pada tag widget di bawah ini -->
+<widget id="com.example.esp32controller" version="1.0.0" 
+        xmlns="http://www.w3.org/ns/widgets" 
+        xmlns:cdv="http://cordova.apache.org/ns/1.0"
+        xmlns:android="http://schemas.android.com/apk/res/android">
+        
     <name>ESP32-C3 Controller Pro</name>
     <description>Hybrid Controller Panel for ESP32-C3</description>
     <author email="dev@example.com" href="http://example.com">Developer</author>
@@ -11,11 +16,12 @@
     <allow-intent href="sms:*" />
     <allow-intent href="mailto:*" />
     <allow-intent href="geo:*" />
+    
     <platform name="android">
         <allow-intent href="market:*" />
         <preference name="KeepRunning" value="true" />
         
-        <!-- Tambahkan izin ini untuk mendukung background mode di Android modern -->
+        <!-- Bagian yang membutuhkan namespace xmlns:android di atas -->
         <config-file parent="/*" target="AndroidManifest.xml">
             <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
             <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
