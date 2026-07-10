@@ -14,5 +14,12 @@
     <platform name="android">
         <allow-intent href="market:*" />
         <preference name="KeepRunning" value="true" />
+        
+        <!-- Tambahkan izin ini untuk mendukung background mode di Android modern -->
+        <config-file parent="/*" target="AndroidManifest.xml">
+            <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+            <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+            <uses-permission android:name="android.permission.WAKE_LOCK" />
+        </config-file>
     </platform>
 </widget>
